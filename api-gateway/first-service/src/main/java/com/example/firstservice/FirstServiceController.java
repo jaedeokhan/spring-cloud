@@ -6,8 +6,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-
 @Slf4j
 @RestController
 @RequestMapping("/first-service")
@@ -22,5 +20,10 @@ public class FirstServiceController {
     public String message(@RequestHeader("first-request") String header) {
         log.info("first-request : {}", header);
         return "Hello World In First Service.";
+    }
+
+    @GetMapping("/check")
+    public String check() {
+        return "Hi, there. This is a message from First Service.";
     }
 }
