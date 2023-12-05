@@ -6,6 +6,9 @@ spring:
     name: discoveryservice
 
 eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송 (기본 30초)
+    lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
   client:
     register-with-eureka: false
     fetch-registry: false
