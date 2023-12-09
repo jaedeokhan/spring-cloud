@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/user-service")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -23,7 +23,8 @@ public class UserController {
 
     @GetMapping("/health_check")
     public String healthCheck() {
-        return env.getProperty("greeting.message");
+        return String.format("It's Working in User Service on PORT %s",
+                env.getProperty("local.server.port"));
     }
 
     @GetMapping("/welcome")
