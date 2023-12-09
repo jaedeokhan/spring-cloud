@@ -6,6 +6,7 @@
 
 - 5. Catalogs and Orders Microservice
   - User Microservice와 Spring Cloud Gateway 연동
+  - Catalogs Microservice 구성 및 기능 구현
 
 ## Section 4 Users Microservice
 
@@ -316,4 +317,297 @@ public class UserController {
     }
 }
 
+```
+
+### Catalogs MicroService 구성 및 기능 구현
+
+1. build.gralde 
+  - spring-cloud-starter-netflix-eureka-client
+  - spring-boot-starter-web
+  - spring-boot-starter-data-jpa
+  - spring-boot-devtools
+  - modelmapper:2.3.9
+  - h2:1.3.176 
+  - lombok
+  - spring-boot-starter-test
+2. application.yml 
+  - datasource
+  - h2
+  - jpa
+  - logging 등 추가
+3. data.sql - catalog init data
+4. CatalogRepository extends CrudRepository<CatalogEntity, Long>
+5. CatalogEntity - DB
+  - @ColumnDefault(value = "CURRENT_TIMESTAMP") 애노테이션으로 초기값 설정 가능
+6. CatalogDto - Service
+7. ResponseCatalog - Controller 반환 
+
+#### build.gradle
+
+```js
+    plugins {
+        id 'org.springframework.boot' version '2.4.4'
+        id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+        id 'java'
+    }
+
+    group = 'catalog-service'
+    version = '0.0.1-SNAPSHOT'
+    sourceCompatibility = '11'
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:2020.0.0" // Spring Cloud 버전 명시
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-devtools'
+        implementation 'org.modelmapper:modelmapper:2.3.9'
+        implementation 'com.h2database:h2:1.3.176'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+```
+
+#### application.yml
+
+user-service와 다른점은 jpa ddl-auto: create-drop 추가, show-sql, generate-ddl 추가
+
+```js
+server:
+  port: 0
+
+spring:
+  application:
+    name: catalog-service
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    generate-ddl: true
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송 (기본 30초)
+    lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
+  client:
+    register-with-eureka: true
+    fetch-registry: true # EUREKA 서버로부터 인스턴스들의 정보를 주기적으로 가져올 것인지를 설정하는 속성
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+
+logging:
+  level:
+    org.example.catalogservice: DEBUG
+```
+
+#### data.sql
+
+```sql
+INSERT INTO catalog(product_id, product_name, stock, unit_price)  
+    VALUES('CATALOG-001', 'Berlin', 100, 1500);  
+INSERT INTO catalog(product_id, product_name, stock, unit_price)  
+    VALUES('CATALOG-002', 'Tokyo', 110, 1000);  
+INSERT INTO catalog(product_id, product_name, stock, unit_price)  
+    VALUES('CATALOG-003', 'Stockholm', 120, 2000);
+```
+
+#### CatalogRepository.java
+
+```java
+package org.example.catalogservice.jpa;
+
+import org.example.catalogservice.entity.CatalogEntity;
+import org.springframework.data.repository.CrudRepository;
+
+public interface CatalogRepository extends CrudRepository<CatalogEntity, Long> {
+    CatalogEntity findBydProductId(String productId);
+}
+```
+
+#### CatalogEntity.java
+
+createdAt 필드는 @Column(nullable = false, updatable = false, insertable = false) 애노테이션으로 update, insert 불가능 설정
+@ColumnDefault(value = "CURRENT_TIMESTAMP")로 초기에 데이터 세팅 설정
+
+```java
+package org.example.catalogservice.entity;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
+
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Date;
+
+@Entity
+@Table(name = "catalog")
+@Getter @Setter
+public class CatalogEntity implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 120, unique = true)
+    private String productId;
+    @Column(nullable = false)
+    private String productName;
+    @Column(nullable = false)
+    private Integer stock;
+    @Column(nullable = false)
+    private Integer unitPrice;
+
+    @Column(nullable = false, updatable = false, insertable = false)
+    @ColumnDefault(value = "CURRENT_TIMESTAMP")
+    private Date createdAt;
+}
+
+```
+
+#### CatalogDto.java
+
+```java
+package org.example.catalogservice.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+
+@Getter @Setter
+public class CatalogDto implements Serializable {
+    private String productId;
+    private Integer qty;
+    private Integer unitPrice;
+    private Integer totalPrice;
+
+    private String orderId;
+    private String userId;
+}
+
+```
+
+#### ResponseCatalog.java
+
+```java
+package org.example.catalogservice.vo;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Date;
+
+@Getter @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ResponseCatalog {
+    private String productId;
+    private String productName;
+    private Integer unitPrice;
+    private Integer stock;
+    private Date createdAt;
+}
+```
+
+#### CatalogController.java
+
+1. 헬스체크 GET API
+2. 상품 전체 조회 GET API 
+
+```java
+package org.example.catalogservice.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.example.catalogservice.entity.CatalogEntity;
+import org.example.catalogservice.service.CatalogService;
+import org.example.catalogservice.vo.ResponseCatalog;
+import org.modelmapper.ModelMapper;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RestController
+@RequestMapping("/catalog-service")
+@RequiredArgsConstructor
+public class CatalogController {
+
+    private final Environment env;
+    private final CatalogService catalogService;
+    @GetMapping("/health_check")
+    public String healthCheck() {
+        return String.format("It's Working in Catalog Service on PORT %s",
+                env.getProperty("local.server.port"));
+    }
+
+    @GetMapping("/catalogs")
+    public ResponseEntity<List<ResponseCatalog>> getCatalogs() {
+        Iterable<CatalogEntity> catalogs = catalogService.getAllCatalogs();
+
+        List<ResponseCatalog> responseCatalogs = new ArrayList<>();
+        catalogs.forEach(v -> {
+            responseCatalogs.add(new ModelMapper().map(v, ResponseCatalog.class));
+        });
+
+        return ResponseEntity.status(HttpStatus.OK).body(responseCatalogs);
+    }
+}
+```
+
+#### API G/W application.yml CATELOG-SERVICE 추가하기
+
+id 이름은 catalog-service이다.
+/catalog-service로 들어오는 모든 요청은 eureka에 등록된 라운드 로빈 CATALOG-SERVICE를 찾아서 API G/W가 대신 요청을 받는다.
+
+1. service-discovery
+2. API G/W
+3. catalog service
+
+```js
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: catalog-service
+          uri: lb://CATALOG-SERVICE
+          predicates:
+            - Path=/catalog-service/**
 ```
