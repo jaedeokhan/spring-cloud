@@ -2,7 +2,7 @@
 
 - Users Microservice
  - Spring Security 추가 및 BrcyptPasswordEncoder 사용
- - Eureka Server Applcation 다운되지 않는 버그
+ - Eureka Server Application 다운되지 않는 버그
 
 ## Section 4 Users Microservice
 
@@ -162,7 +162,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 ```
 
 ### Eureka Server Application 다운 시 삭제되지 않는 버그
-- [해결 참고 주소 - inflean](https://www.inflearn.com/questions/192768/%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94-user-service-4%EA%B0%9C-%EB%AA%A8%EB%91%90-%EC%A3%BD%EC%98%80%EB%8A%94%EB%8D%B0-%EA%B3%84%EC%86%8D-eureka%EC%97%90-%EC%82%B4%EC%95%84-%EC%9E%88%EB%8B%A4%EA%B3%A0-%EB%82%98%EC%99%80%EC%9A%94-%E3%85%A0)
+- [해결 참고 주소 - inflearn](https://www.inflearn.com/questions/192768/%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94-user-service-4%EA%B0%9C-%EB%AA%A8%EB%91%90-%EC%A3%BD%EC%98%80%EB%8A%94%EB%8D%B0-%EA%B3%84%EC%86%8D-eureka%EC%97%90-%EC%82%B4%EC%95%84-%EC%9E%88%EB%8B%A4%EA%B3%A0-%EB%82%98%EC%99%80%EC%9A%94-%E3%85%A0)
 
 시스템에서 비정상적으로 종료된 프로세스에 대해서는 유레카가 서비스를 종료하지 못하는 경우 발생한다.
 정상 동작 과정은 Application에서 일정한 시간 내에 Eureka 서버로 heartbeat를 전달하지 않을 경우 Eureka 서버에서 자동으로 등록된 인스턴스를 삭제하게 된다.
