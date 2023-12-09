@@ -1,8 +1,11 @@
 # Spring Cloud 
 
-- Users Microservice
+- 4. Users Microservice
  - Spring Security 추가 및 BrcyptPasswordEncoder 사용
  - Eureka Server Application 다운되지 않는 버그
+
+- 5. Catalogs and Orders Microservice
+  - User Microservice와 Spring Cloud Gateway 연동
 
 ## Section 4 Users Microservice
 
@@ -189,4 +192,128 @@ eureka:
     fetch-registry: true # EUREKA 서버로부터 인스턴스들의 정보를 주기적으로 가져올 것인지를 설정하는 속성
     service-url:
       defaultZone: http://127.0.0.1:8761/eureka
+```
+
+
+## Section 5. Catalogs and Orders Microservice
+
+### Users Microservice와 Spring Cloud Gateway 연동
+
+#### G/W application.yml
+eureka service discovery에 등록된 API G/W와 User Service가 등록되어 있고 
+API G/W가 /user-service으로 들어오는 요청을 eureka에 등록된 USER_SERVICE에 요청을 보내고 응답을 받는다.
+
+```js
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+```
+
+```js
+server:
+  port: 8000
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
+    lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송 (기본 30초)
+    lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+
+spring:
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      default-filters:
+        - name: GlobalFilter
+          args:
+            baseMessage: Spring Cloud Gateway Global Filter
+            preLogger: true
+            postLogger: true
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+        - id: first-service
+          uri: lb://MY-FIRST-SERVICE
+          predicates:
+            - Path=/first-service/**
+          filters:
+#            - AddRequestHeader=first-request, first-requests-header2
+#            - AddResponseHeader=first-response, first-response-header2
+            - CustomFilter
+        - id: second-service
+          uri: lb://MY-SECOND-SERVICE
+          predicates:
+            - Path=/second-service/**
+          filters:
+#            - AddRequestHeader=second-request, second-requests-header2
+#            - AddResponseHeader=second-response, second-response-header2
+            - name: CustomFilter
+            - name: LoggingFilter
+              args:
+                baseMessage: Hi, there.
+                preLogger: true
+                postLogger: true
+```
+
+### User Service에서는 UserController에서 @RequestMapping("/user-service")로 수정
+
+#### UserController
+
+```java
+package org.example.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.example.dto.UserDto;
+import org.example.service.UserService;
+import org.example.vo.RequestUser;
+import org.example.vo.ResponseUser;
+import org.modelmapper.ModelMapper;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/user-service")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final Environment env;
+    private final Greeting greeting;
+    private final UserService userService;
+    private final ModelMapper mapper;
+
+    @GetMapping("/health_check")
+    public String healthCheck() {
+        return String.format("It's Working in User Service on PORT %s",
+                env.getProperty("local.server.port"));
+    }
+
+    @GetMapping("/welcome")
+    public String welcome() {
+        return greeting.getMessage();
+    }
+
+    @PostMapping("/users")
+    public ResponseEntity<ResponseUser> createUser(@RequestBody RequestUser requestUser) {
+        UserDto userDto = mapper.map(requestUser, UserDto.class);
+        userService.createUser(userDto);
+
+        ResponseUser responseUser = mapper.map(userDto, ResponseUser.class);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseUser);
+    }
+}
+
 ```
