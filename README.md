@@ -1,12 +1,13 @@
 # Spring Cloud 
 
-- 4. Users Microservice
+- Section4. Users Microservice
  - Spring Security 추가 및 BrcyptPasswordEncoder 사용
  - Eureka Server Application 다운되지 않는 버그
 
-- 5. Catalogs and Orders Microservice
+- Section5. Catalogs and Orders Microservice
   - User Microservice와 Spring Cloud Gateway 연동
   - Catalogs Microservice 구성 및 기능 구현
+  - Orders Microservice 구성 및 기능 구현
 
 ## Section 4 Users Microservice
 
@@ -610,4 +611,53 @@ spring:
           uri: lb://CATALOG-SERVICE
           predicates:
             - Path=/catalog-service/**
+```
+
+### Orders Microservice - 기능 구현
+
+#### build.gradle
+의존성은 Catalogs Microservice와 동일
+
+
+#### applicaiton.yml
+
+jpa.hibernate.ddl-auto: update로 설정, 초기 data.sql은 존재하지 않음
+
+```js
+server:
+  port: 0
+
+spring:
+  application:
+    name: order-service
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password:
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송 (기본 30초)
+    lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
+  client:
+    register-with-eureka: true
+    fetch-registry: true # EUREKA 서버로부터 인스턴스들의 정보를 주기적으로 가져올 것인지를 설정하는 속성
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+
+logging:
+  level:
+    org.example.orderservice: DEBUG
 ```
