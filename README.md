@@ -1,13 +1,16 @@
 # Spring Cloud 
 
 - Section4. Users Microservice
- - Spring Security 추가 및 BrcyptPasswordEncoder 사용
- - Eureka Server Application 다운되지 않는 버그
+  - Spring Security 추가 및 BrcyptPasswordEncoder 사용
+  - Eureka Server Application 다운되지 않는 버그
 
 - Section5. Catalogs and Orders Microservice
   - User Microservice와 Spring Cloud Gateway 연동
   - Catalogs Microservice 구성 및 기능 구현
   - Orders Microservice 구성 및 기능 구현
+
+- Section6. Users Microservice - AuthenticationFilter 추가
+  - AuthenticationFilter 추가
 
 ## Section 4 Users Microservice
 
@@ -660,4 +663,109 @@ eureka:
 logging:
   level:
     org.example.orderservice: DEBUG
+```
+
+## Section 6. Users Microservice 
+
+### Users Microservice - AuthenticationFilter 
+* RequestLogin
+* AuthenticationFilter 추가 ( extends UsernamePasswordAuthenticationFilter )
+* WebSecurityConfig ip 체크 및 filter 설정
+
+#### AuthenticationFilter.java
+
+* attemptAuthentication, successfulAuthentication 메서드 오버라이딩
+  * attemptAuthentication에서 UsernamePasswordAuthenticationToken 처리 (컨트롤러로 부터 받은 email, password)
+
+```java
+package org.example.config.security;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.vo.RequestLogin;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request,
+                                                HttpServletResponse response) throws AuthenticationException {
+        try {
+            RequestLogin credentials = new ObjectMapper().readValue(request.getInputStream(), RequestLogin.class);
+
+            return getAuthenticationManager().authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            credentials.getEmail(),
+                            credentials.getPassword(),
+                            new ArrayList<>())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain chain,
+                                            Authentication authResult) throws IOException, ServletException {
+        super.successfulAuthentication(request, response, chain, authResult);
+    }
+}
+```
+
+#### WebSecurityConfig.java
+
+* configurer(HttpSecurity http) 메서드로 인가처리를 수행 ip 체크 및 filter 추가
+
+```java
+package org.example.config.security;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable();
+//        http.authorizeRequests().antMatchers("/users/**").permitAll();
+        http.authorizeRequests().antMatchers("/**")
+                .hasIpAddress("192.168.0.2")
+                .and()
+                .addFilter(getAuthenticationFilter());
+
+        http.headers().frameOptions().disable();
+    }
+
+    @Bean
+    private AuthenticationFilter getAuthenticationFilter() throws Exception {
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
+        authenticationFilter.setAuthenticationManager(authenticationManager());
+
+        return authenticationFilter;
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
 ```
