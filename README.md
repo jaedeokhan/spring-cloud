@@ -12,6 +12,7 @@
 - Section6. Users Microservice - AuthenticationFilter 추가
   - AuthenticationFilter 추가
   - loadUserByUsername(String username) 구현 
+  - Routes 정보 변경 && Routes 테스트
 
 ## Section 4 Users Microservice
 
@@ -805,3 +806,46 @@ public class UserServiceImpl implements UserService {
 }
 ```
 
+### Users Microservice - Routes 정보 변경 && Routes 테스트
+
+API G/W에서 /user-service/** 들어오는 요청을 서비스들에게 전달을 할 때는 /user-service를 제거하고 /**로 포워딩
+정상적으로 시큐리티 /login이 되는지 확인할려면 회원가입 후 login 진행
+
+1. 회원가입 요청
+  - POST http://127.0.0.1:8000/user-service/users
+  - body 
+
+```json
+{
+  "email" : "hjaedeok@gmail.com",
+  "name" : "test",
+  "password" : "12345678"
+}
+```
+
+2. 로그인 진행 
+  - POST http://127.0.0.1:8000/user-service/login
+  - body
+
+```json
+{
+  "email": "hjaedeok@gmail.com",
+  "password": "12345678"
+}
+```
+
+Login Form을 사용하지 않고 REST 방식으로 로그인을 할 때 UsernamePasswordAuthenticationFilter를 상속받고 있는 AuthenticationFilter에서 successfulAuthentication 메서드의 구현체를 주석처리해야한다. 
+
+#### AuthenticationFilter
+
+```java
+public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+'''
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain chain,
+                                            Authentication authResult) throws IOException, ServletException {
+//        super.successfulAuthentication(request, response, chain, authResult);
+    }
+```

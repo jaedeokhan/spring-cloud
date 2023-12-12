@@ -33,9 +33,9 @@ public class UserServiceImpl implements UserService {
         }
 
         return new User(userEntity.getEmail(),
-                        userEntity.getEncryptedPassword(),
+                userEntity.getEncryptedPassword(),
                 true, true, true, true,
-                        new ArrayList<>()
+                new ArrayList<>()
         );
     }
 
