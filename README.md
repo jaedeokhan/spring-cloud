@@ -11,6 +11,7 @@
 
 - Section6. Users Microservice - AuthenticationFilter 추가
   - AuthenticationFilter 추가
+  - loadUserByUsername(String username) 구현 
 
 ## Section 4 Users Microservice
 
@@ -769,3 +770,38 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 }
 
 ```
+
+### Users Microservice - loadUserByUserName() 구현
+* WebSecurityConfig에서 configurer(AuthenticationManagerBuilder) 구현
+* UserService에서 UserDetailService 상속
+  * UserServiceImpl에서 loadUserByUsername(String username) 구현
+
+#### UserServiceImpl
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final ModelMapper mapper;
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        UserEntity userEntity = userRepository.findByEmail(username);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException(username);
+        }
+
+        return new User(userEntity.getEmail(),
+                        userEntity.getEncryptedPassword(),
+                true, true, true, true,
+                        new ArrayList<>()
+        );
+    }
+'''
+}
+```
+
