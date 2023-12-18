@@ -1,9 +1,7 @@
 package org.example.config.security;
 
 import lombok.RequiredArgsConstructor;
-import org.example.service.UserDetailServiceImpl;
 import org.example.service.UserService;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -17,8 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @RequiredArgsConstructor
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final Environment env;
     private final UserService userService;
+    private final Environment env;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -34,7 +32,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     protected AuthenticationFilter getAuthenticationFilter() throws Exception {
-        AuthenticationFilter authenticationFilter = new AuthenticationFilter();
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(userService, env);
         authenticationFilter.setAuthenticationManager(authenticationManager());
 
         return authenticationFilter;
