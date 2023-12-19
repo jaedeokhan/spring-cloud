@@ -13,6 +13,7 @@
   - AuthenticationFilter 추가
   - loadUserByUsername(String username) 구현 
   - Routes 정보 변경 && Routes 테스트
+  - JWT 생성
 
 ## Section 4 Users Microservice
 
@@ -848,4 +849,47 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
                                             Authentication authResult) throws IOException, ServletException {
 //        super.successfulAuthentication(request, response, chain, authResult);
     }
+```
+
+### JWT 생성
+
+#### build.gradle - JWT 의존성
+
+```js
+dependencies { 
+'''
+    implementation 'io.jsonwebtoken:jjwt:0.9.1'  
+'''
+}
+```
+
+#### AuthenticationFilter - JWT 생성 로직
+
+Jwts.builder를 통해서 생성
+
+```java
+@Slf4j
+@RequiredArgsConstructor
+public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+'''
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain chain,
+                                            Authentication authResult) throws IOException, ServletException {
+        String username = ((User) authResult.getPrincipal()).getUsername();
+        UserDto userDetails = userService.getUserDetailsByEmail(username);
+
+        String token = Jwts.builder()
+                .setSubject(userDetails.getUserId())
+                .setExpiration(new Date(System.currentTimeMillis() +
+                        Long.parseLong(env.getProperty("token.expiration_time"))))
+                .signWith(SignatureAlgorithm.HS512, env.getProperty("token.secret"))
+                .compact();
+
+        response.addHeader("token", token);
+        response.addHeader("userId", userDetails.getUserId());
+
+    }
+}
 ```
