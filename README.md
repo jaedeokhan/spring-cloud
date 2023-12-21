@@ -21,6 +21,7 @@
 
 - Section7. Configuration Service
   - Spring Cloud Config
+  - Users Microservice에서 Spring Cloud Config 연동 1,2
 
 ## Section 4 Users Microservice
 
@@ -1100,4 +1101,43 @@ spring:
        server:
          git:
            uri: file://C:\Users\jaedeok\study\msa-test
+```
+
+### Users Microservice에서 Spring Cloud Config 연동 1,2
+1. Users Microservice에서 Spring Cloud Config 사용하기 위해서 build.gralde 의존성 2개 추가
+  - org.springframework.cloud:spring-cloud-starter-config
+  - org.springframework.cloud:spring-cloud-starter-bootstrap
+2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
+3. UserController에서 health_check에서 token 값 출력
+4. Spring Cloud Config yml 값 변동 시 - Users Microservice에서 변경된 값 가져오는 방법 3가지
+  - 재기동
+  - Actuator
+  - Spring Cloud Bus
+5. 해당 챕터에서는 Actuator 사용
+6. Actuator 라이브러리 build.gradle 추가
+  - implementation 'org.springframework.boot:spring-boot-starter-actuator'
+7. WebSecurityConfig에서 /actuator/** 경로 permitAll() 허용
+8. application.yml에서 actuator refresh, health, beans 열어주기
+  - refresh POST
+  - health GET
+  - beans GET
+
+#### 2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
+
+```js
+spring:
+  cloud:
+    config:
+      uri: http://127.0.0.1:8888
+      name: ecommerce
+```
+
+#### 8. application.yml actuator 설정 열어주기
+
+```js
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans
 ```
