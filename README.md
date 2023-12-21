@@ -14,6 +14,13 @@
   - loadUserByUsername(String username) 구현 
   - Routes 정보 변경 && Routes 테스트
   - JWT 생성
+  - AuthorizationHeaderFilter 추가
+  - 에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
+     - 해결 의존성 추가 : implementation 'org.glassfish.jaxb:jaxb-runtime' 
+  - JWT 테스트
+
+- Section7. Configuration Service
+  - Spring Cloud Config
 
 ## Section 4 Users Microservice
 
@@ -892,4 +899,205 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     }
 }
+```
+
+### AuthorizationHeaderFilter 추가
+
+#### AuthorizationHeaderFilter.java
+
+- JWT 처리하는 헤더 로직 apply() 작성
+- JWT Valid 처리 - isJwtValid() 
+- JWT 예외 발생 - onError()
+
+```java
+package com.example.apigatewayservice.filter;
+
+import io.jsonwebtoken.Jwts;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
+
+@Component
+@Slf4j
+public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<AuthorizationHeaderFilter.Config> {
+
+    Environment env;
+
+    public AuthorizationHeaderFilter(Environment env) {
+        super(Config.class);
+        this.env = env;
+    }
+
+    public static class Config {
+    }
+
+    // login -> token -> users (with token) -> header(include token)
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+
+            if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                return onError(exchange, "No authorization header", HttpStatus.UNAUTHORIZED);
+            }
+
+            String authorizationHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
+            String jwt = authorizationHeader.replace("Bearer", "");
+
+            if (!isJwtValid(jwt)) {
+                return onError(exchange, "JWT Token is not valid", HttpStatus.UNAUTHORIZED);
+            }
+
+            return chain.filter(exchange);
+        };
+    }
+
+    // Mono, Flux -> Spring WebFlux에서 나오는 개념
+    // 단일 : Mono, 다중 : Flux
+    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(httpStatus);
+
+        log.error(err);
+        return response.setComplete();
+    }
+
+    private boolean isJwtValid(String jwt) {
+        boolean returnValue = true;
+
+        String subject = null;
+
+        try {
+            subject = Jwts.parser().setSigningKey(env.getProperty("token.secret"))
+                    .parseClaimsJws(jwt).getBody()
+                    .getSubject();
+        } catch (Exception exception) {
+            returnValue = false;
+        }
+
+        if (subject == null || subject.isEmpty()) {
+            returnValue = false;
+        }
+
+        return returnValue;
+    }
+}
+
+```
+
+#### application.yml - Header 및 token.secret 추가
+
+```js
+'''
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+            - Method=GET
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+            - AuthorizationHeaderFilter
+'''
+token:
+  secret: my_secret_user_token
+'''
+```
+
+### 에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
+
+#### Error
+
+subject = Jwts.parser().setSigningKey(env.getProperty("token.secret")) 해당 구문 사용 시 예외 발생
+문제는 의존성, implementation 'org.glassfish.jaxb:jaxb-runtime' 의존성 추가로 해결
+
+```bash
+2023-12-19 22:17:00.114 ERROR 25316 --- [ctor-http-nio-7] reactor.netty.http.server.HttpServer     : [id:4e24869b-1, L:/127.0.0.1:8000 - R:/127.0.0.1:63444] 
+
+java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
+	at io.jsonwebtoken.impl.Base64Codec.decode(Base64Codec.java:26) ~[jjwt-0.9.1.jar:0.9.1]
+	at io.jsonwebtoken.impl.DefaultJwtParser.setSigningKey(DefaultJwtParser.java:151) ~[jjwt-0.9.1.jar:0.9.1]
+	at com.example.apigatewayservice.filter.AuthorizationHeaderFilter.isJwtValid(AuthorizationHeaderFilter.java:69) ~[classes/:na]
+	at com.example.apigatewayservice.filter.AuthorizationHeaderFilter.lambda$apply$0(AuthorizationHeaderFilter.java:44) ~[classes/:na]
+	at org.springframework.cloud.gateway.filter.OrderedGatewayFilter.filter(OrderedGatewayFilter.java:44) ~[spring-cloud-gateway-server-3.0.0.jar:3.0.0]
+	at org.springframework.cloud.gateway.handler.FilteringWebHandler$DefaultGatewayFilterChain.lambda$filter$0(FilteringWebHandler.java:117) ~[spring-cloud-gateway-server-3.0.0.jar:3.0.0]
+	at reactor.core.publisher.MonoDefer.subscribe(MonoDefer.java:44) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoDefer.subscribe(MonoDefer.java:52) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoDefer.subscribe(MonoDefer.java:52) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.Mono.subscribe(Mono.java:4099) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoIgnoreThen$ThenIgnoreMain.drain(MonoIgnoreThen.java:173) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoIgnoreThen.subscribe(MonoIgnoreThen.java:56) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoDefer.subscribe(MonoDefer.java:52) ~[reactor-core-3.4.4.jar:3.4.4]
+	at reactor.core.publisher.MonoDefer.subscribe(MonoDefer.java:52) ~[reactor-core-3.4.4.jar:3.4.4]
+```
+
+### JWT 테스트
+
+상단에서 API G/W applicaiton.yml에 /user-service/**로 들어오는 요청은 모두 AuthenticationHeaderFilter를 거치게 설정함
+로그인과 회원가입 이외에는 헤더 Authorization에 Bearer JWT(Value) 담아서 보내야 한다.
+
+
+## Section7. Configuration Service
+
+### Spring Cloud Config
+Spring Cloud Config란 각 서비스들의 yml 같은 공통 설정들을 모으고 변경사항이 생기면 서비스에 반영 가능하게 한다.
+
+
+### Spring Cloud Config - 프로젝트 생성
+1. build.gradle
+  - spring-cloud-config-server
+2. main에 @EnableConfigServer 추가
+3. application.yml
+  - server.port 지정
+  - spring.cloud.config.server.git.uri 설정
+
+#### build.gradle
+
+```js
+    implementation 'org.springframework.cloud:spring-cloud-config-server'
+```
+
+#### ConfigServiceApplication.java
+
+```java
+package org.example.configservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.config.server.EnableConfigServer;
+
+@SpringBootApplication
+@EnableConfigServer
+public class ConfigServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ConfigServiceApplication.class, args);
+    }
+}
+```
+
+#### application.yml
+
+server.port와 git.uri 경로를 설정해준다.
+윈도우에서는 file://{경로1}\{경로2}\{경로{3} 역슬래시(\)로 구분해준다.
+
+```js
+server:
+  port: 8888
+
+spring:
+   application:
+     name: config-service
+   cloud:
+     config:
+       server:
+         git:
+           uri: file://C:\Users\jaedeok\study\msa-test
 ```
