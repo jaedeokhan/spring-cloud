@@ -27,7 +27,14 @@ repositories {
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
+    /* Fetching Config server 처리 위한 의존성 추가 */
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
+    /**/
     implementation 'org.springframework.boot:spring-boot-devtools'
+    /* yml 변경 시 서버 재기동 하지 않기 위한 actuator 사용 */
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    /**/
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
     implementation 'org.glassfish.jaxb:jaxb-runtime'
     compileOnly 'org.projectlombok:lombok'

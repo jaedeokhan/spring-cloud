@@ -22,7 +22,8 @@
 - Section7. Configuration Service
   - Spring Cloud Config
   - Users Microservice에서 Spring Cloud Config 연동 1,2
-
+  - Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2
+  
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1054,11 +1055,11 @@ Spring Cloud Config란 각 서비스들의 yml 같은 공통 설정들을 모으
 
 ### Spring Cloud Config - 프로젝트 생성
 1. build.gradle
-  - spring-cloud-config-server
+  * spring-cloud-config-server
 2. main에 @EnableConfigServer 추가
 3. application.yml
-  - server.port 지정
-  - spring.cloud.config.server.git.uri 설정
+  * server.port 지정
+  * spring.cloud.config.server.git.uri 설정
 
 #### build.gradle
 
@@ -1105,22 +1106,22 @@ spring:
 
 ### Users Microservice에서 Spring Cloud Config 연동 1,2
 1. Users Microservice에서 Spring Cloud Config 사용하기 위해서 build.gralde 의존성 2개 추가
-  - org.springframework.cloud:spring-cloud-starter-config
-  - org.springframework.cloud:spring-cloud-starter-bootstrap
+  * org.springframework.cloud:spring-cloud-starter-config
+  * org.springframework.cloud:spring-cloud-starter-bootstrap
 2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
 3. UserController에서 health_check에서 token 값 출력
 4. Spring Cloud Config yml 값 변동 시 - Users Microservice에서 변경된 값 가져오는 방법 3가지
-  - 재기동
-  - Actuator
-  - Spring Cloud Bus
+  * 재기동
+  * Actuator
+  * Spring Cloud Bus
 5. 해당 챕터에서는 Actuator 사용
 6. Actuator 라이브러리 build.gradle 추가
-  - implementation 'org.springframework.boot:spring-boot-starter-actuator'
+  * implementation 'org.springframework.boot:spring-boot-starter-actuator'
 7. WebSecurityConfig에서 /actuator/** 경로 permitAll() 허용
 8. application.yml에서 actuator refresh, health, beans 열어주기
-  - refresh POST
-  - health GET
-  - beans GET
+  * refresh POST
+  * health GET
+  * beans GET
 
 #### 2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
 
@@ -1140,4 +1141,65 @@ management:
     web:
       exposure:
         include: refresh, health, beans
+```
+
+### Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2
+1. build.gralde 의존성 추가
+  * spring-cloud-starter-config
+  * spring-cloud-starter-bootstrap
+  * spring-boot-starter-actuator
+2. bootstarp.yml 추가
+3. application.yml actuator 설정 추가 및 USER-SERVICE Actuator 설정 열어주기
+4. ApigatewayServiceApplication.java
+  * HttpTraceRepository @Bean 설정
+
+#### appliation.yml 설정
+
+```js
+spring:
+  application:
+    name: apigateway-service
+  cloud:
+    gateway:
+      default-filters:
+'''
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/actuator/**
+            - Method=GET,POST
+          filters:
+            - RemoveRequestHeader=Cookie
+            - RewritePath=/user-service/(?<segment>.*), /$\{segment}
+'''
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, httptrace
+```
+
+#### ApigatewayServiceApplication.java
+
+```java
+package com.example.apigatewayservice;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.trace.http.HttpTraceRepository;
+import org.springframework.boot.actuate.trace.http.InMemoryHttpTraceRepository;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+@SpringBootApplication
+public class ApigatewayServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ApigatewayServiceApplication.class, args);
+    }
+
+    @Bean
+    public HttpTraceRepository httpTraceRepository() {
+        return new InMemoryHttpTraceRepository();
+    }
+}
 ```
