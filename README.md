@@ -191,8 +191,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 1. DELETE /eureka/v2/apps/appID/instanceID - 직접 삭제
 2. eureka.server.enable-self-preservation: false - 서버에서 자가 보존모드 끄기
 3. eureka.client.instance - 클라이언트에서 하트비트 전송 시간 설정
-  -  lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송  (기본 30초)
-  -  lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
+   -  lease-renewal-interval-in-seconds: 1 # 디스커버리한테 1초마다 하트비트 전송  (기본 30초)
+   -  lease-expiration-duration-in-seconds: 2 # 디스커버리는 서비스 등록 해제 하기 전에 마지막 하트비트에서부터 2초 기다림
 
 #### application.yml
 2번 설정은 해봤지만 사라지지 않아서 3번 client에서 설정
@@ -338,23 +338,23 @@ public class UserController {
 ### Catalogs MicroService 구성 및 기능 구현
 
 1. build.gralde 
-  - spring-cloud-starter-netflix-eureka-client
-  - spring-boot-starter-web
-  - spring-boot-starter-data-jpa
-  - spring-boot-devtools
-  - modelmapper:2.3.9
-  - h2:1.3.176 
-  - lombok
-  - spring-boot-starter-test
+   - spring-cloud-starter-netflix-eureka-client
+   - spring-boot-starter-web
+   - spring-boot-starter-data-jpa
+   - spring-boot-devtools
+   - modelmapper:2.3.9
+   - h2:1.3.176 
+   - lombok
+   - spring-boot-starter-test
 2. application.yml 
-  - datasource
-  - h2
-  - jpa
-  - logging 등 추가
+   - datasource
+   - h2
+   - jpa
+   - logging 등 추가
 3. data.sql - catalog init data
 4. CatalogRepository extends CrudRepository<CatalogEntity, Long>
 5. CatalogEntity - DB
-  - @ColumnDefault(value = "CURRENT_TIMESTAMP") 애노테이션으로 초기값 설정 가능
+   - @ColumnDefault(value = "CURRENT_TIMESTAMP") 애노테이션으로 초기값 설정 가능
 6. CatalogDto - Service
 7. ResponseCatalog - Controller 반환 
 
@@ -1055,11 +1055,11 @@ Spring Cloud Config란 각 서비스들의 yml 같은 공통 설정들을 모으
 
 ### Spring Cloud Config - 프로젝트 생성
 1. build.gradle
-  * spring-cloud-config-server
+   * spring-cloud-config-server
 2. main에 @EnableConfigServer 추가
 3. application.yml
-  * server.port 지정
-  * spring.cloud.config.server.git.uri 설정
+   * server.port 지정
+   * spring.cloud.config.server.git.uri 설정
 
 #### build.gradle
 
@@ -1106,22 +1106,22 @@ spring:
 
 ### Users Microservice에서 Spring Cloud Config 연동 1,2
 1. Users Microservice에서 Spring Cloud Config 사용하기 위해서 build.gralde 의존성 2개 추가
-  * org.springframework.cloud:spring-cloud-starter-config
-  * org.springframework.cloud:spring-cloud-starter-bootstrap
+   * org.springframework.cloud:spring-cloud-starter-config
+   * org.springframework.cloud:spring-cloud-starter-bootstrap
 2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
 3. UserController에서 health_check에서 token 값 출력
 4. Spring Cloud Config yml 값 변동 시 - Users Microservice에서 변경된 값 가져오는 방법 3가지
-  * 재기동
-  * Actuator
-  * Spring Cloud Bus
+   * 재기동
+   * Actuator
+   * Spring Cloud Bus
 5. 해당 챕터에서는 Actuator 사용
 6. Actuator 라이브러리 build.gradle 추가
-  * implementation 'org.springframework.boot:spring-boot-starter-actuator'
+   * implementation 'org.springframework.boot:spring-boot-starter-actuator'
 7. WebSecurityConfig에서 /actuator/** 경로 permitAll() 허용
 8. application.yml에서 actuator refresh, health, beans 열어주기
-  * refresh POST
-  * health GET
-  * beans GET
+   * refresh POST
+   * health GET
+   * beans GET
 
 #### 2. bootstrap.yml에서 Spring Cloud Config 서버 및 설정
 
@@ -1145,13 +1145,13 @@ management:
 
 ### Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2
 1. build.gralde 의존성 추가
-  * spring-cloud-starter-config
-  * spring-cloud-starter-bootstrap
-  * spring-boot-starter-actuator
+   * spring-cloud-starter-config
+   * spring-cloud-starter-bootstrap
+   * spring-boot-starter-actuator
 2. bootstarp.yml 추가
 3. application.yml actuator 설정 추가 및 USER-SERVICE Actuator 설정 열어주기
 4. ApigatewayServiceApplication.java
-  * HttpTraceRepository @Bean 설정
+   * HttpTraceRepository @Bean 설정
 
 #### appliation.yml 설정
 
