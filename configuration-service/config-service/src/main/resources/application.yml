@@ -8,4 +8,9 @@ spring:
      config:
        server:
          git:
-           uri: file://C:\Users\jaedeok\study\spring-boot\spring-msa\configuration-service\local-git-repo
+#           uri: file://C:\Users\jaedeok\study\spring-boot\spring-msa\configuration-service\local-git-repo
+           uri: https://github.com/jaedeokhan/spring-cloud-config
+           default-label: main
+#           repository가 private일 경우 설정
+#           username: [your username]
+#           password: [your password]
