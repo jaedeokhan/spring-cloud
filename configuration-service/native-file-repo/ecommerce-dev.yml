@@ -1,0 +1,6 @@
+token:
+  expiration_time: 864000000 # 60 * 60 * 24 * 1000
+  secret: dev_my_secret_user_native_token
+
+gateway:
+  ip: 192.168.0.2

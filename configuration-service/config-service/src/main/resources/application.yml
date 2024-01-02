@@ -4,13 +4,28 @@ server:
 spring:
    application:
      name: config-service
+   profiles:
+     active: native
+   rabbitmq:
+     host: 127.0.0.1
+     port: 5672
+     username: guest
+     password: guest
    cloud:
      config:
        server:
-         git:
+         native:
+           search-locations: file:///${user.home}/study/spring-boot/spring-msa/configuration-service/native-file-repo
+#         git:
 #           uri: file://C:\Users\jaedeok\study\spring-boot\spring-msa\configuration-service\local-git-repo
-           uri: https://github.com/jaedeokhan/spring-cloud-config
-           default-label: main
+#           uri: https://github.com/jaedeokhan/spring-cloud-config
+#           default-label: main
 #           repository가 private일 경우 설정
 #           username: [your username]
 #           password: [your password]
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, busrefresh
