@@ -23,7 +23,10 @@
   - Spring Cloud Config
   - Users Microservice에서 Spring Cloud Config 연동 1,2
   - Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2
-  
+
+- Section8. Spring Cloud Bus
+  - AMQP 사용
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1203,3 +1206,60 @@ public class ApigatewayServiceApplication {
     }
 }
 ```
+
+## Section08. Spring Cloud Bus
+
+### AMQP 사용
+Spring Cloud Bus가 RabbitMQ를 사용해서 Client(Users Service, API GW 등)에게 Config Server 값을 전달할려면 AMQP 프로토콜을 사용한다.
+
+#### Config Server - build.gradle
+* spring-cloud-starter-bus-amqp 추가 
+* spring-boot-starter-actuator 추가
+
+```js
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-config-server'
+    implementation 'org.springframework.cloud:spring-cloud-starter-bus-amqp'
+    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+```
+
+#### User Service, API G/W
+* spring-cloud-starter-bus-amqp 추가
+
+#### Config Server application.yml 설정
+* spring.rabbitmq 설정 추가
+* actuator 설정 추가
+
+```js
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, busrefresh
+```
+
+#### Users Service, API GW application.yml 설정
+* spring.rabbitmq 설정 추가
+* Users Service에만 actuator busrefresh 설정 추가
+
+```js
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+```
+
