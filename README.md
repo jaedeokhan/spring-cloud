@@ -26,6 +26,7 @@
 
 - Section8. Spring Cloud Bus
   - AMQP 사용
+  - Spring Cloud Bus 테스트
 
 ## Section 4 Users Microservice
 
@@ -1263,3 +1264,17 @@ spring:
     password: guest
 ```
 
+### Spring Cloud Bus 테스트
+기존 방법에서는 Spring Cloud Config Server에서 yml 수정 사항이 있으면 actuator의 refresh를 서비스마다(Users Service, API GW, Catalog Service) 호출을 해줘야 했다.
+
+Spring Cloud Bus를 사용하면 Config Server에서 yml 수정 사항이 있으면 actuator busrefresh 요청을 한 서비스에 요청하면 RabbitMQ가 AMQP 프로토콜을 통해서 모든 서비스에 yml 설정을 반영해준다.
+
+#### 테스트 방법
+0. RabbitMQ 기동
+1. Spring Cloud Config Server 기동
+2. Spring Eureka 기동 - Service Discovery
+3. Spring Cloud API GW 기동
+4. Spring Users Service 기동
+5. Config Server에 연결된 yml을 수정
+6. API G/W OR Users Service 둘 중에 한 서비스에 actuator busrefresh 요청 수행
+7. RabbitMQ가 요청 전파 - Spring Cloud Bus 역할 수행 
