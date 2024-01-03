@@ -28,6 +28,9 @@
   - AMQP 사용
   - Spring Cloud Bus 테스트
 
+- Section9. 설정 정보의 암호화 처리
+  - 대칭키를 이용한 암호화
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1278,3 +1281,56 @@ Spring Cloud Bus를 사용하면 Config Server에서 yml 수정 사항이 있으
 5. Config Server에 연결된 yml을 수정
 6. API G/W OR Users Service 둘 중에 한 서비스에 actuator busrefresh 요청 수행
 7. RabbitMQ가 요청 전파 - Spring Cloud Bus 역할 수행 
+
+## Section9. 설정 정보의 암호화 처리
+
+### 대칭키를 이용한 암호화 1,2
+
+#### Config Server 의존성 추가
+- bootstrap 추가
+
+#### Config Server bootstrap.yml encrypt.key 추가
+
+Config Server에서 encrypt.key로 salt 값을 명시해준다.
+
+```js
+encrypt:
+  key: abcdefghijklmnopqrstuvwxyz012345678
+```
+
+#### Config Server 기동 후 POST /encrypt, POST /decrypt 호출
+POST /encrypt 요청에 Body에는 암호화할 DB Password text를 넣고 진행한다.
+
+#### Users Service application.yml 수정
+- 기존 datasource 삭제 -> native-file-repo의 user-service.yml에서 관리
+
+#### Users Service, API G/W bootstrap.yml 수정
+- spring.cloud.config.name을 config-service -> user-service 사용할 yml 이름으로 변경
+
+#### native-file-repo user-service.yml 수정
+
+spring.datasource.password를 '{cipher} + 암호화 패스워드 + ' 로 설정해준다.
+
+```js
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: '{cipher}328b524892f2890d0c1075a9aeeab28c98503f8f62d6514bb63e863ac1a3b4f2'
+
+token:
+  expiration_time: 864000000 # 60 * 60 * 24 * 1000
+  secret: user_token_native_user_service_default
+
+gateway:
+  ip: 192.168.0.2
+```
+
+#### 테스트 방법
+1. eureka 기동
+2. api g/w 기동
+3. config server 기동
+4. users service 기동
+5. users service port로 http://127.0.0.1:port/h2-console 접근해서 user-service.yml에서 등록한 패스워드로 로그인 잘 되는지 확인
+6. 추가로 config server에 직접적으로 http://127.0.0.1:8888/user-service/default로 요청을 하면 cipher값이 decrypt가 자동으로 되서 원문이 나오는 것을 확인가능하다. password에 cipher를 빼면 값이 n/a가 나온다.
