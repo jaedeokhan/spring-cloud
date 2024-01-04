@@ -30,6 +30,7 @@
 
 - Section9. 설정 정보의 암호화 처리
   - 대칭키를 이용한 암호화
+  - 비대칭키를 이용한 암호화
 
 ## Section 4 Users Microservice
 
@@ -1334,3 +1335,55 @@ gateway:
 4. users service 기동
 5. users service port로 http://127.0.0.1:port/h2-console 접근해서 user-service.yml에서 등록한 패스워드로 로그인 잘 되는지 확인
 6. 추가로 config server에 직접적으로 http://127.0.0.1:8888/user-service/default로 요청을 하면 cipher값이 decrypt가 자동으로 되서 원문이 나오는 것을 확인가능하다. password에 cipher를 빼면 값이 n/a가 나온다.
+
+### 비대칭키를 이용한 암호화 1,2
+비대칭키는 private key, public key 암복호화 시 서로 다른 키를 이용하는 방법이다.
+보통 private key로 암호화를 하고, public key로 복호화를 한다.
+
+#### 키 생성
+
+keytool을 이용한다.
+* -genkeypair : 키 생성
+* -alas apiEncryptionKey : 키 alias 설정
+* -keyalg RSA : 키 알고리즘 설정
+* -dname : 서명 작업
+* -keypass : 키 패스워드 설정
+* -keystore : 키 저장 파일 이름 설정
+* -storepass : 저장 패스워드 설정
+
+```js
+keytool -genkeypair -alias apiEncryptionKey -keyalg RSA -dname "CN=JaeDeok Han, OU=API Development, O=deok.co.kr, L=Seoul, C=KR" -keypass "test1234" -keystore apiEncryptionKey.jks -storepass "test1234"
+```
+
+#### 키 확인
+
+keytool -list 명령어를 통해서 생성된 키 파일의 상세 정보를 볼 수 있다.
+
+```js
+keytool -list -keystore apiEncryptionKey.jks -v
+```
+
+#### public key 생성
+
+keytool -export를 사용해서 public key 인증서를 생성
+
+```js
+keytool -export -alias apiEncryptionKey -keystore apiEncryptionKey.jks -rfc -file trustServer.cer
+```
+
+#### public key 인증서 -> public key jks 변경
+
+```js
+keytool -import -alias trustServer -file trustServer.cer -keystore publicKey.jks
+```
+
+#### Config Server - encrypt.key-store 설정
+Config Server에서 encrypt/decrypt 하기 위한 key-store를 설정한다.
+
+```js
+encrypt:  
+  key-store:  
+    location: file:///${user.home}/study/spring-boot/spring-msa/keystore/apiEncryptionKey.jks  
+    password: test1234  
+    alias: apiEncryptionKey
+```

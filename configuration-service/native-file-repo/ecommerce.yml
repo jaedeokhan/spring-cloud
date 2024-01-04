@@ -1,6 +1,6 @@
 token:
   expiration_time: 864000000 # 60 * 60 * 24 * 1000
-  secret: my_secret_user_native_token
+  secret: '{cipher}AQBXQsgxJKJo8ZHry7s3pvRqZ1g1ajGYtlfm2LW0ubskEsIF3wKkmPlbtyO71x6pA8uDbuwEQBNX6ywARsJL9ISietkZuKMpVaKWzVDGOjIdDhC3SVIWOz18HywpEoIgIX3vQZ5SLmKXRqDRnblds3QIt3a3ZRHQuD293gFOfzPJAoexF5BiJcsjgtzrEO4AQ2ZzGjSpPcSAjv4TgBLf41l5wCmZhSaX/ICbF+AosV+Ok4kwsfYxkmSMTN3w8Fg8bIabWoJSEN3WXC7ikwHMgRJadjy/m0KVXuxmnrwj4q99UPwYlcsLNT4G7ih3WXUWwcBbDU29ARC1DXYFohxaUdDjaHbOTO31lyCEy/Tc/K95PNLH7/r4mSzviS0czigSxcEaz1Xl3PDhfX71gQNi28VK'
 
 gateway:
   ip: 192.168.0.2
