@@ -1,6 +1,7 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.client.OrderServiceClient;
 import org.example.dto.UserDto;
 import org.example.jpa.UserEntity;
 import org.example.jpa.UserRepository;
@@ -29,7 +30,8 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper mapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final Environment env;
-    private final RestTemplate restTemplate;
+//    private final RestTemplate restTemplate;
+    private final OrderServiceClient orderServiceClient;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -70,15 +72,19 @@ public class UserServiceImpl implements UserService {
 
 //        List<ResponseOrder> orders = new ArrayList<>();
 //        String orderU rl = "http://127.0.0.1:8000/order-service/%s/orders";
-        String orderUrl = String.format(env.getProperty("order_service.url"), userId);
-        ResponseEntity<List<ResponseOrder>> orderListResponse = restTemplate.exchange(
-                orderUrl,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<ResponseOrder>>() {
-        });
+//        String orderUrl = String.format(env.getProperty("order_service.url"), userId);
+//        ResponseEntity<List<ResponseOrder>> orderListResponse = restTemplate.exchange(
+//                orderUrl,
+//                HttpMethod.GET,
+//                null,
+//                new ParameterizedTypeReference<List<ResponseOrder>>() {
+//        });
+//        List<ResponseOrder> ordersList = orderListResponse.getBody();
 
-        List<ResponseOrder> ordersList = orderListResponse.getBody();
+
+        /* Using a feign client */
+        List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
+
         userDto.setOrders(ordersList);
 
         return userDto;

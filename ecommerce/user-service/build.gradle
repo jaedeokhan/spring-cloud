@@ -39,6 +39,8 @@ dependencies {
     /* yml 변경 시 서버 재기동 하지 않기 위한 actuator 사용 */
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     /**/
+    /* Feign Client */
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.modelmapper:modelmapper:2.3.9'
     implementation 'com.h2database:h2:1.3.176'

@@ -32,6 +32,10 @@
   - 대칭키를 이용한 암호화
   - 비대칭키를 이용한 암호화
 
+- Section10. Microservice 간 통신
+  - RestTemplate 사용
+  - FeignClient 사용
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1386,4 +1390,141 @@ encrypt:
     location: file:///${user.home}/study/spring-boot/spring-msa/keystore/apiEncryptionKey.jks  
     password: test1234  
     alias: apiEncryptionKey
+```
+
+## Section10. Mciroservice 간 통신
+
+### RestTemplate 사용
+User Service -> Order Service 호출하기 위해서 사용
+
+#### User Service - RestTemplateConfig 생성
+
+```java
+package org.example.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class RestTemplateConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+#### UserServiceImpl - RestTemplate 사용 부 구현
+UserServiceImpl에서 RestTemplate를 사용하기 위해서 의존성을 주입받고,  
+application.yml에서 order_service.url 값을 설정해서 사용하기 위해서 Environment 의존성 주입
+
+```java
+    @Override
+    public UserDto getUserByUserId(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        UserDto userDto = mapper.map(userEntity, UserDto.class);
+
+        List<ResponseOrder> orders = new ArrayList<>();
+        String orderUrl = String.format(env.getProperty("order_service.url"), userId);
+        ResponseEntity<List<ResponseOrder>> orderListResponse = restTemplate.exchange(
+                orderUrl,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<ResponseOrder>>() {
+        });
+        List<ResponseOrder> ordersList = orderListResponse.getBody();
+
+        userDto.setOrders(ordersList);
+
+        return userDto;
+    }
+```
+
+### RestTemplate url 설정에서 IP 이외에 eureka 서버에 등록된 서비스 이름 사용 방법
+RestTemplate 구현부에서 @LoadBalanced 애노테이션 사용 후 native-file-server/user-service.yml 공통 설정에서 ip -> service name 수정
+
+#### RestTemplateConfig
+
+```java
+package org.example.config;
+
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class RestTemplateConfig {
+
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+```
+
+#### user-service.yml
+
+```js
+order_service:
+  url: http://ORDER-SERVICE/order-service/%s/orders
+```
+
+### FeignClient 사용
+1. 의존성 추가 - implementation 'org.springframework.cloud:spring-cloud-starter-openfeign
+2. OrderServiceClient
+
+#### build.gradle 
+
+```js
+implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+```
+
+#### OrderServiceClient.java
+
+```java
+package org.example.client;
+
+import org.example.vo.ResponseOrder;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
+
+@FeignClient(name = "order-service")
+public interface OrderServiceClient {
+
+    @GetMapping("/order-service/{userId}/orders")
+    List<ResponseOrder> getOrders(@PathVariable String userId);
+}
+```
+
+##### UserServiceImpl.java
+
+```java
+    @Override
+    public UserDto getUserByUserId(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        if (userEntity == null) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        UserDto userDto = mapper.map(userEntity, UserDto.class);
+
+        /* Using a feign client */
+        List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
+
+        userDto.setOrders(ordersList);
+
+        return userDto;
 ```
