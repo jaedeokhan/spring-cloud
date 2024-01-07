@@ -35,6 +35,7 @@
 - Section10. Microservice 간 통신
   - RestTemplate 사용
   - FeignClient 사용
+  - FeignClient 예외 처리
 
 ## Section 4 Users Microservice
 
@@ -1528,3 +1529,38 @@ public interface OrderServiceClient {
 
         return userDto;
 ```
+
+#### FeignClient 예외 처리
+FeignClient 예외 처리를 하기 위해서는 application.yml과 Logger.level @Bean을 생성한다.
+
+#### application.yml - logging.level 설정
+
+```js
+logging:
+  level:
+    org.example.client: DEBUG
+```
+
+#### FeignLoggingLevel @Bean 설정
+
+```java
+package org.example.config;
+
+import feign.Logger;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class FeignLoggingConfig {
+
+    @Bean
+    public Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
+}
+```
+
+#### UserServiceImpl.java Exception 처리
+현재는 API POST /user-services/users/{user_id} 요청을 하면 Users Service -> Orders Service로 FeignClient 통신을 한다.
+Orders Service에서 404여도 Users Service에서는 500에러가 발생한다.
+UserServiceImpl에서 try - catch로 FeignException을 잡아서 현재는 로깅을 처리 하는 로직을 추가한다.

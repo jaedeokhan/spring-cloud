@@ -33,7 +33,7 @@ greeting:
 
 logging:
   level:
-    org.example: DEBUG
+    org.example.client: DEBUG
 
 management:
   endpoints:
