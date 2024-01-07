@@ -36,6 +36,7 @@
   - RestTemplate 사용
   - FeignClient 사용
   - FeignClient 예외 처리
+  - ErrorDecoder를 이용한 예외 처리 
 
 ## Section 4 Users Microservice
 
@@ -1564,3 +1565,77 @@ public class FeignLoggingConfig {
 현재는 API POST /user-services/users/{user_id} 요청을 하면 Users Service -> Orders Service로 FeignClient 통신을 한다.
 Orders Service에서 404여도 Users Service에서는 500에러가 발생한다.
 UserServiceImpl에서 try - catch로 FeignException을 잡아서 현재는 로깅을 처리 하는 로직을 추가한다.
+
+### ErrorDecoder를 이용한 예외 처리
+1. ErrorDecoder.java 구현 
+2. FeignConfig.java에서 ErrorDecoder Bean 등록
+
+#### ErrorDecoder.java 구현
+FeignErrorDecoder에서 decode() 함수를 오버라이딩해서 상태코드에 따라 처리한다.
+
+```java
+package org.example.config.feign;
+
+import feign.Response;
+import feign.codec.ErrorDecoder;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+@RequiredArgsConstructor
+public class FeignErrorDecoder implements ErrorDecoder {
+
+    private final Environment env;
+
+    @Override
+    public Exception decode(String methodKey, Response response) {
+        switch (response.status()) {
+            case 400:
+                break;
+            case 404:
+                if ( methodKey.contains("getOrders")) {
+                    return new ResponseStatusException(
+                            HttpStatus.valueOf(response.status()),
+                            env.getProperty("order_service.exception.orders_is_empty")
+                    );
+                }
+                break;
+            default:
+                return new Exception(response.reason());
+        }
+
+        return null;
+    }
+}
+```
+
+#### FeignConfig.java ErrorDecoder @Bean 등록
+FeignErrorDecoder를 @Bean으로 등록 처리
+
+```java
+package org.example.config.feign;
+
+import feign.Logger;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+
+@Configuration
+@RequiredArgsConstructor
+public class FeignConfig {
+
+    private final Environment env;
+
+    @Bean
+    public FeignErrorDecoder feignErrorDecoder() {
+        return new FeignErrorDecoder(env);
+    }
+
+    @Bean
+    public Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
+}
+```

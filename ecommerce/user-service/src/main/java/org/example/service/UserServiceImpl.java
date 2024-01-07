@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapper mapper;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final Environment env;
+//    private final Environment env;
 //    private final RestTemplate restTemplate;
     private final OrderServiceClient orderServiceClient;
 
@@ -88,12 +88,7 @@ public class UserServiceImpl implements UserService {
 
         /* Using a feign client */
         /* Feign exception handling */
-        List<ResponseOrder> ordersList = null;
-        try {
-            ordersList = orderServiceClient.getOrders(userId);
-        } catch (FeignException ex) {
-            log.error(ex.getMessage());
-        }
+        List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
 
         userDto.setOrders(ordersList);
 
