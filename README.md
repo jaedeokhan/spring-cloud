@@ -38,6 +38,11 @@
   - FeignClient 예외 처리
   - ErrorDecoder를 이용한 예외 처리 
 
+- Section11. 데이터 동기화를 위한 Apache Kafka의 활용1
+  - Apache Kafka 사용 - Producer/Consumer
+  - Apache Kafka 사용 - Kafka Connect
+  - Orders Microservice에서 MariaDB 연동
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1639,3 +1644,18 @@ public class FeignConfig {
     }
 }
 ```
+
+## Section11. 데이터 동기화를 위한 Apache Kafka의 활용1
+
+### Apache Kafka 사용 - Producer/Consumer
+Producer는 메시지를 생산
+Consumer는 메시지를 소비
+
+### Apache Kafka 사용 - Kafka Connect
+Kafka Connect를 통해 Data를 Import/Export 가능
+
+### Orders Microservice에서 MariaDB 연동
+1. build.gradle 의존성 추가
+   - implementation 'org.mariadb.jdbc:mariadb-java-client'
+2. MariaDB 생성
+3. users 테이블 생성
