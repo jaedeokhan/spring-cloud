@@ -45,7 +45,8 @@
 
 - Section12. 데이터 동기화를 위한 Apache Kafka의 활용2
   - Catalog Microservice 컨슈머 적용
-
+  - Orders Microservice 프로듀서 적용 
+  
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1761,3 +1762,11 @@ public class KafkaConsumer {
     }
 }
 ```
+
+### Orders Microservice 프로듀서 적용
+Conumser 적용과 동일하게 의존성을 추가하고, KakfaProducerConfig를 생성하고, 프로듀서 역할인 KafkaProducer 생성
+
+#### Orders Microservice Producer -> Catalog Microservice Consumer 동작 과정
+1. OrderController에서 POST /{userid}/orders로 요청된 주문 수량을 받는다.
+2. 주문 수량을 받고 kafkaProducer.send("example-catalog-topic", orderDto);를 통해서 직렬화해서  Catalog Conumer 리스너로 전달
+3. Catalogs Microservice에서 KafkaConumer에서 Listner가 Kafka로 부터 받아서 역직렬화를 통해서 수량 업데이트 처리
