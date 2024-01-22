@@ -43,6 +43,9 @@
   - Apache Kafka 사용 - Kafka Connect
   - Orders Microservice에서 MariaDB 연동
 
+- Section12. 데이터 동기화를 위한 Apache Kafka의 활용2
+  - Catalog Microservice 컨슈머 적용
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1659,3 +1662,102 @@ Kafka Connect를 통해 Data를 Import/Export 가능
    - implementation 'org.mariadb.jdbc:mariadb-java-client'
 2. MariaDB 생성
 3. users 테이블 생성
+
+## Section12. 데이터 동기화를 위한 Apache Kafka의 활용2
+
+### Catalog Microservice 컨슈머 적용
+
+#### spring kafka 의존성 추가
+
+```js
+implementation 'org.springframework.kafka:spring-kafka'
+```
+
+#### KafkaConsumerConfig.java 설정
+KafakConsumerConfig 클래스에서는 카프카 컨슈머 설정과 리스너 설정이 존재
+
+```java
+package org.example.catalogservice.messagequeue;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@EnableKafka
+@Configuration(proxyBeanMethods = false)
+public class KafkaConsumerConfig {
+    @Bean
+    public ConsumerFactory<String, String> consumerFactory() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+        properties.put(ConsumerConfig.GROUP_ID_CONFIG, "consumerGroupId"); // 여러개 컨슈머 그룹핑
+        properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(properties);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory
+                = new ConcurrentKafkaListenerContainerFactory<>();
+        kafkaListenerContainerFactory.setConsumerFactory(consumerFactory());
+
+        return kafkaListenerContainerFactory;
+    }
+}
+```
+
+#### KafkaConsumer.java - 실제 수량 업데이트 처리
+카프카에서 토픽이 저장될 때 카프카 컨슈머가 데이터를 받아서 역직렬화해서 수량을 업데이트 치는 로직
+
+```js
+package org.example.catalogservice.messagequeue;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.catalogservice.entity.CatalogEntity;
+import org.example.catalogservice.jpa.CatalogRepository;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class KafkaConsumer {
+    private final CatalogRepository catalogRepository;
+
+    @KafkaListener(topics = "example-catalog-topic")
+    public void updateQty(String kafkaMessage) {
+        log.info("Kafka Message : -> {}", kafkaMessage);
+
+        Map<Object, Object> map = new HashMap<>();
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            map = mapper.readValue(kafkaMessage, new TypeReference<Map<Object, Object>>() {});
+        } catch (JsonProcessingException ex) {
+            log.error(ex.getMessage());
+        }
+
+        CatalogEntity entity = catalogRepository.findByProductId((String) map.get("productId"));
+        if (entity != null) {
+            entity.setStock(entity.getStock() - (Integer)map.get("qty"));
+            catalogRepository.save(entity);
+        }
+    }
+}
+```
