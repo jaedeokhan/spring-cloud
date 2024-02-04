@@ -2,6 +2,8 @@ plugins {
     id 'org.springframework.boot' version '2.4.4'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id 'java-library'
+    id 'war'
 }
 
 group = 'order-service'
@@ -24,6 +26,17 @@ repositories {
     mavenCentral()
 }
 
+//configurations.implementation.setCanBeResolved(true)
+//configurations.api.setCanBeResolved(true)
+//
+//task copyDependencies(type: Copy) {
+//    from configurations.api
+//    from configurations.implementation
+//    into "lib/test"
+//}
+
+//def useNetty = true
+
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -36,6 +49,11 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // netty 환경이 true인 경우 netty 의존성 추가
+//    if (useNetty) {
+//        implementation 'io.netty:netty-all:4.1.68.Final'
+//    }
 }
 
 test {
