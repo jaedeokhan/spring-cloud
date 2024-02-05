@@ -9,6 +9,8 @@ import org.example.jpa.UserEntity;
 import org.example.jpa.UserRepository;
 import org.example.vo.ResponseOrder;
 import org.modelmapper.ModelMapper;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserService {
 //    private final Environment env;
 //    private final RestTemplate restTemplate;
     private final OrderServiceClient orderServiceClient;
+    private final CircuitBreakerFactory circuitBreakerFactory;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -88,7 +91,10 @@ public class UserServiceImpl implements UserService {
 
         /* Using a feign client */
         /* Feign exception handling */
-        List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
+//        List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+        List<ResponseOrder> ordersList = circuitBreaker.run(() -> orderServiceClient.getOrders(userId),
+                throwable -> new ArrayList<>());
 
         userDto.setOrders(ordersList);
 
