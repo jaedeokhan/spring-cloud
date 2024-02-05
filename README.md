@@ -46,7 +46,11 @@
 - Section12. 데이터 동기화를 위한 Apache Kafka의 활용2
   - Catalog Microservice 컨슈머 적용
   - Orders Microservice 프로듀서 적용 
-  
+
+- Secion13. 장애 처리와 Microservice 분산 추적
+  - CircuitBreaker와 Resilience4J의 사용
+  - Users Microservice에 CircuitBreaker 적용
+
 ## Section 4 Users Microservice
 
 * eureka-server
@@ -1770,3 +1774,82 @@ Conumser 적용과 동일하게 의존성을 추가하고, KakfaProducerConfig�
 1. OrderController에서 POST /{userid}/orders로 요청된 주문 수량을 받는다.
 2. 주문 수량을 받고 kafkaProducer.send("example-catalog-topic", orderDto);를 통해서 직렬화해서  Catalog Conumer 리스너로 전달
 3. Catalogs Microservice에서 KafkaConumer에서 Listner가 Kafka로 부터 받아서 역직렬화를 통해서 수량 업데이트 처리
+
+## Section13. 장애 처리와 Microservice 분산 추적
+
+### CircuitBreaker와 Resilience4J의 사용
+
+#### CircuitBreaker와 Resilience4J란?
+CircuitBreaker란 MSA에서 서비스 요청 시 에러가 발생하면 장애 처리를 도와주는 도구이다.
+Spring netflix hystrix는 Spring Boot 2.3 버전만 지원을 하기에 사용하지 않고,
+Resilience4J는 2.4 버전 이후도 지원하기에 사용한다.
+
+#### build.gradle 의존성 추가
+spring cloud의 circuitbreaker-resilience4j 라이브러리다.
+
+```js
+/* Resilience4j */
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+```
+
+### Users Microservice에 CircuitBreaker 적용
+1. build.gradle에 circuitbreaker-resilience4j 라이브러리 적용
+2. userServiceImpl에서 orderServiceFeign 서비스 호출하는 구문에서 CricuitBreaker 빈 주입 및 로직 처리
+3. Resilience4JConfig 직접 구현
+4. OrderService에서 kafka 구문 잠깐 제거
+
+#### UserServiceImpl
+
+* 기존
+
+```java
+List<ResponseOrder> ordersList = orderServiceClient.getOrders(userId);
+```
+
+* 변경
+
+```java
+        CircuitBreaker circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
+        List<ResponseOrder> ordersList = circuitBreaker.run(() -> orderServiceClient.getOrders(userId),
+                throwable -> new ArrayList<>());
+```
+
+#### Resilience4JConfig
+기본으로 라이브러리만 추가해서 사용되도 되지만 커스텀으로 명확하게 설정 가능하다.
+
+```java
+package org.example.config.resilience4j;
+
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
+import org.springframework.cloud.client.circuitbreaker.Customizer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
+
+@Configuration
+public class Resilience4JConfig {
+    @Bean
+    public Customizer<Resilience4JCircuitBreakerFactory> globalCustomConfiguration() {
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+                .failureRateThreshold(4)
+                .waitDurationInOpenState(Duration.ofMillis(1000))
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.COUNT_BASED)
+                .slidingWindowSize(2)
+                .build();
+
+        TimeLimiterConfig timeLimiterConfig = TimeLimiterConfig.custom()
+                .timeoutDuration(Duration.ofSeconds(4))
+                .build();
+
+        return factory -> factory.configureDefault(id -> new Resilience4JConfigBuilder(id)
+                .timeLimiterConfig(timeLimiterConfig)
+                .circuitBreakerConfig(circuitBreakerConfig)
+                .build());
+    }
+}
+
+```
