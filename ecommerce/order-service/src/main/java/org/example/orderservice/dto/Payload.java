@@ -2,8 +2,10 @@ package org.example.orderservice.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString
 @Builder
 public class Payload {
     private String order_id;
