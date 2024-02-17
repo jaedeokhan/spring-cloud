@@ -1,6 +1,7 @@
 package org.example.orderservice.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.orderservice.dto.OrderDto;
 import org.example.orderservice.jpa.OrderEntity;
 import org.example.orderservice.messagequeue.KafkaProducer;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/order-service")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final Environment env;
@@ -39,6 +41,7 @@ public class OrderController {
     @PostMapping("/{userId}/orders")
     public ResponseEntity<ResponseOrder> createOrder(@PathVariable String userId,
                                                      @RequestBody RequestOrder requestOrder) {
+        log.info("BEFORE add orders data");
         OrderDto orderDto = mapper.map(requestOrder, OrderDto.class);
         orderDto.setUserId(userId);
         /* Process JPA */
@@ -54,12 +57,13 @@ public class OrderController {
 //        orderProducer.send("orders", orderDto);
 
 //        ResponseOrder responseOrder = mapper.map(orderDto, ResponseOrder.class);
-
+        log.info("AFTER add orders data");
         return ResponseEntity.status(HttpStatus.CREATED).body(responseOrder);
     }
 
     @GetMapping("/{userId}/orders")
-    public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable String userId) {
+    public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable String userId) throws Exception {
+        log.info("BEFORE retrieve orders data");
         Iterable<OrderEntity> orders = orderService.getOrdersByUserId(userId);
 
         List<ResponseOrder> result = new ArrayList<>();
@@ -67,6 +71,14 @@ public class OrderController {
             result.add(mapper.map(v, ResponseOrder.class));
         });
 
+        try {
+            Thread.sleep(1000);
+            throw new Exception("장애 발생");
+        } catch (InterruptedException e) {
+            log.warn(e.getMessage());
+        }
+
+        log.info("AFTER retrieve orders data");
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 

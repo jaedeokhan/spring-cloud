@@ -43,6 +43,9 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     /* Resilience4j */
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+    /* sleuth AND zipkin*/
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
     implementation 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.modelmapper:modelmapper:2.3.9'
     implementation 'com.h2database:h2:1.3.176'
