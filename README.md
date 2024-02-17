@@ -50,6 +50,8 @@
 - Secion13. 장애 처리와 Microservice 분산 추적
   - CircuitBreaker와 Resilience4J의 사용
   - Users Microservice에 CircuitBreaker 적용
+  - 분산 추적의 개요 Zipkin 서버 설치
+  - Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2
 
 ## Section 4 Users Microservice
 
@@ -1852,4 +1854,51 @@ public class Resilience4JConfig {
     }
 }
 
+```
+
+#### 분산 추적의 개요 Zipkin 서버 설치
+zipkin은 서비스들간에 요청을 추적할 수 있는 분산 추적 시스템이다.
+WebUI도 제공한다.
+sleuth는 TraceId와 SpanId를 제공한다.
+분산 추적을 하기 위해서는 sleuth + zipkin을 사용해야 한다.
+
+##### zipkin jar download
+
+```bash
+curl -sSL https://zipkin.io/quickstart.sh | bash -s io.zipkin:zipkin-server:2.26.0:slim zipkin.jar
+```
+
+##### zipkin jar 실행
+
+```bash
+java -jar zipkin.jar
+```
+
+#### Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2
+1. build.gradle 의존성 추가
+   - spring-cloud-starter-sleuth
+   - spring-cloud-starter-zipkin 
+      - spring-boot 2.4.4 일 때 호환되는 버전이 없어서 2.3.3.RELEASE로 지정
+2. application.yml 설정 - zipkin, sleuth
+3. 서비스 로직 수정
+
+##### build.gradle 의존성 추가
+
+```js
+    /* sleuth AND zipkin*/
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-starter-zipkin:2.2.3.RELEASE'
+    /**/
+```
+
+##### application.yml 수정
+
+```js
+spring:
+  zipkin:
+    base-url: http://127.0.0.1:9411
+    enabled: true
+  sleuth:
+    sampler:
+      probability: 1.0
 ```
