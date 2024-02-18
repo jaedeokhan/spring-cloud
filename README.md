@@ -2,7 +2,22 @@
 
 <ul>
    <li><a href="#section-4-users-microservice">Section4. Users Microservice</a></li>
-   <li></li>
+   <ul>
+      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
+      <li>Eureka Server Application 다운되지 않는 버그</li>
+   </ul>
+	
+   <li><a href="#section-4-users-microservice">Section5. Catalogs and Orders Microservice</a></li>
+   <ul>
+      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
+      <li>Eureka Server Application 다운되지 않는 버그</li>
+   </ul>
+
+   <li><a href="#section-4-users-microservice">Section4. Users Microservice</a></li>
+   <ul>
+      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
+      <li>Eureka Server Application 다운되지 않는 버그</li>
+   </ul>
 </ul>
 
 
@@ -247,7 +262,7 @@ eureka:
 ```
 
 
-## Section 5. Catalogs and Orders Microservice
+## Section5. Catalogs and Orders Microservice
 
 ### Users Microservice와 Spring Cloud Gateway 연동
 
