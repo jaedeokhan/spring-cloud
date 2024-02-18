@@ -7,72 +7,75 @@
       <li>Eureka Server Application 다운되지 않는 버그</li>
    </ul>
 	
-   <li><a href="#section-4-users-microservice">Section5. Catalogs and Orders Microservice</a></li>
+   <li><a href="#section5-catalogs-and-orders-microservice">Section5. Catalogs and Orders Microservice</a></li>
    <ul>
-      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
-      <li>Eureka Server Application 다운되지 않는 버그</li>
+      <li>User Microservice와 Spring Cloud Gateway 연동</li>
+      <li>Catalogs Microservice 구성 및 기능 구현</li>
+      <li>Orders Microservice 구성 및 기능 구현</li>
    </ul>
 
-   <li><a href="#section-4-users-microservice">Section4. Users Microservice</a></li>
+   <li><a href="#section-6-users-microservice">Section6. Users Microservice - AuthenticationFilter 추가</a></li>
    <ul>
-      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
-      <li>Eureka Server Application 다운되지 않는 버그</li>
+      <li>AuthenticationFilter 추가</li>
+      <li>loadUserByUsername(String username) 구현</li>
+      <li>Routes 정보 변경 && Routes 테스트</li>
+      <li>JWT 생성</li>
+      <li>AuthorizationHeaderFilter 추가</li>
+      <li>에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter</li>
+      <ul>
+         <li>해결 의존성 추가 : implementation 'org.glassfish.jaxb:jaxb-runtime' </li>
+      </ul>
+      <li>JWT 테스트</li>
    </ul>
+
+   <li><a href="#section7-configuration-service">Section7. Configuration Service</a></li>
+   <ul>
+      <li>Spring Cloud Config</li>
+      <li>Users Microservice에서 Spring Cloud Config 연동 1,2</li>
+      <li>Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2</li>
+   </ul>
+
+   <li><a href="#section08-spring-cloud-bus">Section8. Spring Cloud Bus</a></li>
+   <ul>
+      <li>AMQP 사용</li>
+      <li>Spring Cloud Bus 테스트</li>
+   </ul>
+
+   <li><a href="#section9-설정-정보의-암호화-처리">Section9. 설정 정보의 암호화 처리</a></li>
+   <ul>
+      <li>대칭키를 이용한 암호화</li>
+      <li>비대칭키를 이용한 암호화</li>
+   </ul>
+
+   <li><a href="#section10-mciroservice-간-통신">Section10. Microservice 간 통신</a></li>
+   <ul>
+      <li>RestTemplate 사용</li>
+      <li>FeignClient 사용</li>
+      <li>FeignClient 예외 처리</li>
+      <li>ErrorDecoder를 이용한 예외 처리</li>
+   </ul>
+
+   <li><a href="#section11-데이터-동기화를-위한-apache-kafka의-활용1">Section11. 데이터 동기화를 위한 Apache Kafka의 활용1</a></li>
+   <ul>
+      <li>Apache Kafka 사용 - Producer/Consumer</li>
+      <li>Apache Kafka 사용 - Kafka Connect</li>
+      <li>Orders Microservice에서 MariaDB 연동</li>
+   </ul>   
+
+   <li><a href="#section12-데이터-동기화를-위한-apache-kafka의-활용2">Section12. 데이터 동기화를 위한 Apache Kafka의 활용2</a></li>
+   <ul>
+      <li>Catalog Microservice 컨슈머 적용</li>
+      <li>Orders Microservice 프로듀서 적용 </li>
+   </ul>      
+
+   <li><a href="#section13-장애-처리와-microservice-분산-추적">Secion13. 장애 처리와 Microservice 분산 추적</a></li>
+   <ul>
+      <li>CircuitBreaker와 Resilience4J의 사용</li>
+      <li>Users Microservice에 CircuitBreaker 적용</li>
+      <li>분산 추적의 개요 Zipkin 서버 설치</li>
+      <li>Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2</li>
+   </ul>         
 </ul>
-
-
-- Section4. Users Microservice
-  - Spring Security 추가 및 BrcyptPasswordEncoder 사용
-  - Eureka Server Application 다운되지 않는 버그
-
-- Section5. Catalogs and Orders Microservice
-  - User Microservice와 Spring Cloud Gateway 연동
-  - Catalogs Microservice 구성 및 기능 구현
-  - Orders Microservice 구성 및 기능 구현
-
-- Section6. Users Microservice - AuthenticationFilter 추가
-  - AuthenticationFilter 추가
-  - loadUserByUsername(String username) 구현 
-  - Routes 정보 변경 && Routes 테스트
-  - JWT 생성
-  - AuthorizationHeaderFilter 추가
-  - 에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter
-     - 해결 의존성 추가 : implementation 'org.glassfish.jaxb:jaxb-runtime' 
-  - JWT 테스트
-
-- Section7. Configuration Service
-  - Spring Cloud Config
-  - Users Microservice에서 Spring Cloud Config 연동 1,2
-  - Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2
-
-- Section8. Spring Cloud Bus
-  - AMQP 사용
-  - Spring Cloud Bus 테스트
-
-- Section9. 설정 정보의 암호화 처리
-  - 대칭키를 이용한 암호화
-  - 비대칭키를 이용한 암호화
-
-- Section10. Microservice 간 통신
-  - RestTemplate 사용
-  - FeignClient 사용
-  - FeignClient 예외 처리
-  - ErrorDecoder를 이용한 예외 처리 
-
-- Section11. 데이터 동기화를 위한 Apache Kafka의 활용1
-  - Apache Kafka 사용 - Producer/Consumer
-  - Apache Kafka 사용 - Kafka Connect
-  - Orders Microservice에서 MariaDB 연동
-
-- Section12. 데이터 동기화를 위한 Apache Kafka의 활용2
-  - Catalog Microservice 컨슈머 적용
-  - Orders Microservice 프로듀서 적용 
-
-- Secion13. 장애 처리와 Microservice 분산 추적
-  - CircuitBreaker와 Resilience4J의 사용
-  - Users Microservice에 CircuitBreaker 적용
-  - 분산 추적의 개요 Zipkin 서버 설치
-  - Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2
 
 ## Section. 4 Users Microservice
 
