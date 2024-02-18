@@ -3,77 +3,78 @@
 <ul>
    <li><a href="#section-4-users-microservice">Section4. Users Microservice</a></li>
    <ul>
-      <li>Spring Security 추가 및 BrcyptPasswordEncoder 사용</li>
-      <li>Eureka Server Application 다운되지 않는 버그</li>
+      <li><a href="#users-h2-jpa-modelmapper-의존성-추가-및-yml">Users H2, JPA, ModelMapper 의존성 추가 및 yml</a></li>
+      <li><a href="#spring-security-의존성-추가">Spring Security 추가 및 BrcyptPasswordEncoder 사용</a></li>
+      <li><a href="#eureka-server-application-다운-시-삭제되지-않는-버그">Eureka Server Application 다운되지 않는 버그</a></li>
    </ul>
 	
    <li><a href="#section5-catalogs-and-orders-microservice">Section5. Catalogs and Orders Microservice</a></li>
    <ul>
-      <li>User Microservice와 Spring Cloud Gateway 연동</li>
-      <li>Catalogs Microservice 구성 및 기능 구현</li>
-      <li>Orders Microservice 구성 및 기능 구현</li>
+      <li><a href="#users-microservice와-spring-cloud-gateway-연동">User Microservice와 Spring Cloud Gateway 연</a></li> 
+      <li><a href="#catalogs-microservice-구성-및-기능-구현">Catalogs Microservice 구성 및 기능 구현</a></li>
+      <li><a href="#orders-microservice---기능-구현">Orders Microservice 구성 및 기능 구현</a></li>
    </ul>
 
    <li><a href="#section-6-users-microservice">Section6. Users Microservice - AuthenticationFilter 추가</a></li>
    <ul>
-      <li>AuthenticationFilter 추가</li>
-      <li>loadUserByUsername(String username) 구현</li>
-      <li>Routes 정보 변경 && Routes 테스트</li>
-      <li>JWT 생성</li>
-      <li>AuthorizationHeaderFilter 추가</li>
-      <li>에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter</li>
+      <li><a href="#users-microservice---authenticationfilter">AuthenticationFilter 추가</a></li>
+      <li><a href="#users-microservice---loaduserbyusername-구현">loadUserByUsername(String username) 구현</a></li>
+      <li><a href="#users-microservice---routes-정보-변경--routes-테스트">Routes 정보 변경 && Routes 테스트</a></li>
+      <li><a href="#jwt-생성">JWT 생성</a></li>
+      <li><a href="#authorizationheaderfilter-추가">AuthorizationHeaderFilter 추가</a></li>
+      <li><a href="#에러발생--javalangnoclassdeffounderror-javaxxmlbinddatatypeconverter">에러발생 : java.lang.NoClassDefFoundError: javax/xml/bind/DatatypeConverter<</a></li>
       <ul>
          <li>해결 의존성 추가 : implementation 'org.glassfish.jaxb:jaxb-runtime' </li>
-      </ul>
-      <li>JWT 테스트</li>
+      </ul>  
+      <li><a href="#jwt-테스트">JWT 테스트</a></li>
    </ul>
 
    <li><a href="#section7-configuration-service">Section7. Configuration Service</a></li>
    <ul>
-      <li>Spring Cloud Config</li>
-      <li>Users Microservice에서 Spring Cloud Config 연동 1,2</li>
-      <li>Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2</li>
+      <li><a href="#spring-cloud-config">Spring Cloud Config</a></li>
+      <li><a href="#users-microservice에서-spring-cloud-config-연동-12">Users Microservice에서 Spring Cloud Config 연동 1,2</a></li>
+      <li><a href="#spring-cloud-gateway에서-spring-cloud-config-연동-12">Spring Cloud Gateway에서 Spring Cloud Config 연동 1,2</a></li>
    </ul>
 
    <li><a href="#section08-spring-cloud-bus">Section8. Spring Cloud Bus</a></li>
    <ul>
-      <li>AMQP 사용</li>
-      <li>Spring Cloud Bus 테스트</li>
+      <li><a href="#amqp-사용">AMQP 사용</a></li>
+      <li><a href="#spring-cloud-bus-테스트">Spring Cloud Bus 테스트</a></li>
    </ul>
 
    <li><a href="#section9-설정-정보의-암호화-처리">Section9. 설정 정보의 암호화 처리</a></li>
    <ul>
-      <li>대칭키를 이용한 암호화</li>
-      <li>비대칭키를 이용한 암호화</li>
+      <li><a href="#대칭키를-이용한-암호화-12">대칭키를 이용한 암호화</a></li>
+      <li><a href="#비대칭키를-이용한-암호화-12">비대칭키를 이용한 암호화</a></li>
    </ul>
 
    <li><a href="#section10-mciroservice-간-통신">Section10. Microservice 간 통신</a></li>
-   <ul>
-      <li>RestTemplate 사용</li>
-      <li>FeignClient 사용</li>
-      <li>FeignClient 예외 처리</li>
-      <li>ErrorDecoder를 이용한 예외 처리</li>
+   <ul>  
+      <li><a href="#resttemplate-사용">RestTemplate 사용</a></li>
+      <li><a href="#feignclient-사용">FeignClient 사용</a></li>
+      <li><a href="#feignclient-예외-처리">FeignClient 예외 처리</a></li>
+      <li><a href="#errordecoder를-이용한-예외-처리">ErrorDecoder를 이용한 예외 처리</a></li>
    </ul>
 
    <li><a href="#section11-데이터-동기화를-위한-apache-kafka의-활용1">Section11. 데이터 동기화를 위한 Apache Kafka의 활용1</a></li>
-   <ul>
-      <li>Apache Kafka 사용 - Producer/Consumer</li>
-      <li>Apache Kafka 사용 - Kafka Connect</li>
-      <li>Orders Microservice에서 MariaDB 연동</li>
+   <ul>   
+      <li><a href="#apache-kafka-사용---producerconsumer">Apache Kafka 사용 - Producer/Consumer</a></li>
+      <li><a href="#apache-kafka-사용---kafka-connect">Apache Kafka 사용 - Kafka Connect</a></li>
+      <li><a href="#orders-microservice에서-mariadb-연동">Orders Microservice에서 MariaDB 연동</a></li>
    </ul>   
 
    <li><a href="#section12-데이터-동기화를-위한-apache-kafka의-활용2">Section12. 데이터 동기화를 위한 Apache Kafka의 활용2</a></li>
-   <ul>
-      <li>Catalog Microservice 컨슈머 적용</li>
-      <li>Orders Microservice 프로듀서 적용 </li>
+   <ul>  
+      <li><a href="#catalog-microservice-컨슈머-적용">Catalog Microservice 컨슈머 적용</a></li>
+      <li><a href="#orders-microservice-프로듀서-적용">Orders Microservice 프로듀서 적용</a></li>
    </ul>      
 
    <li><a href="#section13-장애-처리와-microservice-분산-추적">Secion13. 장애 처리와 Microservice 분산 추적</a></li>
-   <ul>
-      <li>CircuitBreaker와 Resilience4J의 사용</li>
-      <li>Users Microservice에 CircuitBreaker 적용</li>
-      <li>분산 추적의 개요 Zipkin 서버 설치</li>
-      <li>Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2</li>
+   <ul>  
+      <li><a href="#circuitbreaker와-resilience4j의-사용">CircuitBreaker와 Resilience4J의 사용</a></li>
+      <li><a href="#users-microservice에-circuitbreaker-적용">Users Microservice에 CircuitBreaker 적용</a></li>
+      <li><a href="#분산-추적의-개요-zipkin-서버-설치">분산 추적의 개요 Zipkin 서버 설치</a></li>
+      <li><a href="#spring-cloud-sleuth--zipkin을-이용한-microservice의-분산-추적-12">Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2</a></li>
    </ul>         
 </ul>
 
