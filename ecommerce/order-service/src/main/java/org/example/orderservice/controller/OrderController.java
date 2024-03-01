@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/order-service")
+@RequestMapping("/")
 @RequiredArgsConstructor
 @Slf4j
 public class OrderController {

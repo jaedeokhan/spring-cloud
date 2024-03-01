@@ -80,6 +80,8 @@
    <li><a href="#section14-Micrometer-모니터링">Secion14. Micrometer 모니터링</a></li>
    <ul>  
       <li><a href="#Micrometer-구현">Micrometer 구현</a></li>
+      <li><a href="#Prometheus와-Grafana-설치">Prometheus와 Grafana 설치</a></li>
+      <li><a href="#API-G/W-gateway.routes-설정-우선순위-설정-주의"API G/W gateway.routes 설정 우선순위 설정 주의</a></li>
    </ul>
 </ul>
 
@@ -1963,4 +1965,81 @@ management:
     web:
       exposure:
         include: refresh, health, beans, busrefresh, info, metrics, prometheus
+```
+
+### Prometheus와 Grafana 설치
+
+#### Prometheus 설치
+* https://prometheus.io/download/
+
+#### Grafana 설치
+* https://grafana.com/grafana/download?platform=windows
+
+### API G/W gateway.routes 설정 우선순위 설정 주의
+orders 서비스의 actuator 기능을 API G/W -> orders 서비스를 호출해서 사용을 할려고 했는데 
+계속해서 404 NOT FOUND가 발생했다.
+
+문제의 원인은 API G/W의 applicaiton.yml의 routes 설정 우선순위 문제였다.
+
+해결 방법은 구체적인 설정이 상위에 설정하고, 일반적인 설정은 하위에 위치하게 해야한다.
+
+#### API G/W application.yml
+
+* 기존
+
+기존에는 일반적인 설정인 `/order-service/**`가 `/order-service/actuator/**` 보다 상위에 있기에
+actuator 요청이 와도 위에서 설정한 `/order-service/**`에서 처리가 되고 만다.
+
+```yml
+spring:  
+~~~
+  cloud:  
+    gateway:  
+~~~
+      routes:  
+~~~
+        - id: order-service  
+          uri: lb://ORDER-SERVICE  
+          predicates:  
+            - Path=/order-service/**
+        - id: order-service  
+          uri: lb://ORDER-SERVICE  
+          predicates:  
+            - Path=/order-service/actuator/**  
+            - Method=GET  
+          filters:  
+            - RemoveRequestHeader=Cookie  
+            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+```
+
+* 변경
+
+변경된 설정은 구체저인 설정인 `/order-service/actuator/**`를 먼저 상위에 설정하고,
+일반적인 설정인 `/order-service/**`를 처리하게 해서 설정한다.
+filters에는 RewirtePath 설정을 통해서 API G/W에 `/order-servic/actuator/info`로 요청을 날리면
+실제 orders 서비스에는 요청 URL에 `/order-service/`가 제거되고 `/actuator/info`로 매핑으로 요청이 가게 설정한다. 
+
+```yml
+spring:
+~~~
+  cloud:
+    gateway:
+~~~
+      routes:
+~~~
+		- id: order-service  
+		  uri: lb://ORDER-SERVICE  
+		  predicates:  
+		    - Path=/order-service/actuator/**  
+		    - Method=GET  
+		  filters:  
+		    - RemoveRequestHeader=Cookie  
+		    - RewritePath=/order-service/(?<segment>.*), /$\{segment}  
+		- id: order-service  
+		  uri: lb://ORDER-SERVICE  
+		  predicates:  
+		    - Path=/order-service/**  
+		  filters:  
+		    - RemoveRequestHeader=Cookie  
+		    - RewritePath=/order-service/(?<segment>.*), /$\{segment}
 ```
