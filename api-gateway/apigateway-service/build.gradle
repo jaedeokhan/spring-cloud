@@ -35,6 +35,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-devtools'
     /* yml 변경 시 서버 재기동 하지 않기 위한 actuator 사용 */
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    /* Micrometer*/
+    implementation 'io.micrometer:micrometer-registry-prometheus'
     /**/
     implementation 'io.jsonwebtoken:jjwt:0.9.1'
     implementation 'org.glassfish.jaxb:jaxb-runtime'

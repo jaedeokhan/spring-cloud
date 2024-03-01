@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.UserDto;
 import org.example.jpa.UserEntity;
@@ -26,6 +27,7 @@ public class UserController {
     private final ModelMapper mapper;
 
     @GetMapping("/health_check")
+    @Timed(value="users.status", longTask = true)
     public String healthCheck() {
         return String.format("It's Working in User Service"
                 + ", port(local.server.port=" + env.getProperty("local.server.port")
@@ -36,6 +38,7 @@ public class UserController {
     }
 
     @GetMapping("/welcome")
+    @Timed(value = "users.welcome", longTask = true)
     public String welcome() {
         return greeting.getMessage();
     }
