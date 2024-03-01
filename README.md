@@ -75,7 +75,12 @@
       <li><a href="#users-microservice에-circuitbreaker-적용">Users Microservice에 CircuitBreaker 적용</a></li>
       <li><a href="#분산-추적의-개요-zipkin-서버-설치">분산 추적의 개요 Zipkin 서버 설치</a></li>
       <li><a href="#spring-cloud-sleuth--zipkin을-이용한-microservice의-분산-추적-12">Spring Cloud Sleuth + Zipkin을 이용한 Microservice의 분산 추적 1,2</a></li>
-   </ul>         
+   </ul>
+
+   <li><a href="#section14-Micrometer-모니터링">Secion14. Micrometer 모니터링</a></li>
+   <ul>  
+      <li><a href="#Micrometer-구현">Micrometer 구현</a></li>
+   </ul>
 </ul>
 
 ## Section. 4 Users Microservice
@@ -1926,4 +1931,36 @@ spring:
   sleuth:
     sampler:
       probability: 1.0
+```
+
+## Section14. Micrometer 모니터링
+
+### Micrometer 구현
+1. build.gradle 의존성 추가
+   - implementation 'io.micrometer:micrometer-registry-prometheus'
+2. application.yml actuator exposure 설정 추가
+   - exposure.include -> info, metrics, prometheus
+
+#### Users, Api-gateway, Orders 추가
+users, api-gateway, orders에 build.gradle에 micrometer 의존성과 applicaiton.yml에 exposure 설정을 추가해줘야 한다.
+
+##### build.gradle
+
+```js
+    /* Micrometer*/
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    /**/
+```
+
+##### applicaiton.yml
+
+micrometer와 prometheus 설정을 사용하기 위해서는
+exposure.include 항목에는 info, metrics, prometheus 설정들을 열어줘야한다.
+
+```js
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh, health, beans, busrefresh, info, metrics, prometheus
 ```
