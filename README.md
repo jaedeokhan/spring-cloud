@@ -81,7 +81,7 @@
    <ul>  
       <li><a href="#Micrometer-구현">Micrometer 구현</a></li>
       <li><a href="#Prometheus와-Grafana-설치">Prometheus와 Grafana 설치</a></li>
-      <li><a href="#API-G/W-gateway.routes-설정-우선순위-설정-주의"API G/W gateway.routes 설정 우선순위 설정 주의</a></li>
+      <li><a href="#API-G/W-gateway.routes-설정-우선순위-설정-주의">API G/W gateway.routes 설정 우선순위 설정 주의</a></li>
    </ul>
 </ul>
 
@@ -2027,19 +2027,19 @@ spring:
 ~~~
       routes:
 ~~~
-		- id: order-service  
-		  uri: lb://ORDER-SERVICE  
-		  predicates:  
-		    - Path=/order-service/actuator/**  
-		    - Method=GET  
-		  filters:  
-		    - RemoveRequestHeader=Cookie  
-		    - RewritePath=/order-service/(?<segment>.*), /$\{segment}  
-		- id: order-service  
-		  uri: lb://ORDER-SERVICE  
-		  predicates:  
-		    - Path=/order-service/**  
-		  filters:  
-		    - RemoveRequestHeader=Cookie  
-		    - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+        - id: order-service  
+          uri: lb://ORDER-SERVICE  
+          predicates:  
+            - Path=/order-service/actuator/**  
+            - Method=GET  
+          filters:  
+            - RemoveRequestHeader=Cookie  
+            - RewritePath=/order-service/(?<segment>.*), /$\{segment}  
+        - id: order-service  
+          uri: lb://ORDER-SERVICE  
+          predicates:  
+          - Path=/order-service/**  
+          filters:  
+            - RemoveRequestHeader=Cookie  
+            - RewritePath=/order-service/(?<segment>.*), /$\{segment}
 ```
