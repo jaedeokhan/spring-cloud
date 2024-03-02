@@ -88,6 +88,7 @@
    <ul>  
       <li><a href="#RabbitMQ">RabbitMQ</a></li>
       <li><a href="#Config-Service">Config Service</a></li>
+      <li><a href="#Apigateway-Service">Apigateway Service</a></li>
    </ul>
    
 </ul>
@@ -2138,4 +2139,49 @@ docker run -d -p 8888:8888 --network ecommerce-network \
 
 ```bash
 docker network inspect ecommerce-network
+```
+
+### Apigateway Service
+
+#### application.yml spring.cloud.config 설정 추가
+
+```yml
+spring:
+  application:
+    name: discoveryservice
+  cloud:
+    config:
+      uri: http://127.0.0.1:8888
+      name: ecommerce
+```
+
+#### build.gradle version 변경
+
+```js
+version = '1.0'
+```
+
+#### Dockerfile
+
+```bash
+FROM openjdk:17-ea-11-jdk-slim
+VOLUME /tmp
+COPY build/libs/discoveryservice-1.0.jar discoveryservice.jar
+ENTRYPOINT ["java", "-jar", "discoveryservice.jar"]
+```
+
+#### docker build
+
+```bash
+docker build -t hjaedeok15/discovery-service:1.0 .
+```
+
+#### docker run
+eureka의 default port는 8761이다.
+network 설정도 하고, spring.cloud.config.uri는 config-service라는 컨테이너 이름으로 사용했다.
+
+```bash
+docker run -d -p 8761:8761 --network ecommerce-network \
+-e "spring.cloud.config.uri=http://config-service:8888" \
+--name discovery-service hjaedeok15/discovery-service:1.0
 ```
