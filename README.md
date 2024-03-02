@@ -83,6 +83,13 @@
       <li><a href="#Prometheus와-Grafana-설치">Prometheus와 Grafana 설치</a></li>
       <li><a href="#API-G/W-gateway.routes-설정-우선순위-설정-주의">API G/W gateway.routes 설정 우선순위 설정 주의</a></li>
    </ul>
+   
+   <li><a href="#section15-애플리케이션-배포-Docker-Container">Secion15. 애플리케이션 배포 - Docker Container</a></li>
+   <ul>  
+      <li><a href="#RabbitMQ">RabbitMQ</a></li>
+   </ul>
+   
+</ul>
 </ul>
 
 ## Section. 4 Users Microservice
@@ -2042,4 +2049,25 @@ spring:
           filters:  
             - RemoveRequestHeader=Cookie  
             - RewritePath=/order-service/(?<segment>.*), /$\{segment}
+```
+
+
+## Secion15. 애플리케이션 배포 - Docker Container
+
+### RabbitMQ
+
+#### Create docker network
+실습을 진행하기 위한 network 생성
+
+```bash
+docker network create --gateway 172.18.0.1 --subnet 172.18.0.0/16 ecommerce-network
+```
+
+#### Command docker run
+
+```bash
+docker run -d --name rabbitmq --network ecommerce-network \
+-p 15672:15672 -p 5672:5672 -p 15671:15671 -p 5671:5671 -p 4369:4369 \
+-e RABBITMQ_DEFAULT_USER=guest \
+-e RABBITMQ_DEFAULT_PASS=guest rabbitmq:management
 ```
