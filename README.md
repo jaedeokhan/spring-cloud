@@ -88,6 +88,7 @@
    <ul>  
       <li><a href="#RabbitMQ">RabbitMQ</a></li>
       <li><a href="#Config-Service">Config Service</a></li>
+      <li><a href="#Discovery-Service">Discovery Service</a></li>
       <li><a href="#Apigateway-Service">Apigateway Service</a></li>
    </ul>
    
@@ -2141,7 +2142,7 @@ docker run -d -p 8888:8888 --network ecommerce-network \
 docker network inspect ecommerce-network
 ```
 
-### Apigateway Service
+### Discovery Service
 
 #### application.yml spring.cloud.config 설정 추가
 
@@ -2184,4 +2185,34 @@ network 설정도 하고, spring.cloud.config.uri는 config-service라는 컨테
 docker run -d -p 8761:8761 --network ecommerce-network \
 -e "spring.cloud.config.uri=http://config-service:8888" \
 --name discovery-service hjaedeok15/discovery-service:1.0
+```
+
+### Apigateway Service
+Apigateway 서비스에서는 build.gradle에 버전만 수정을 해주고,
+docker run 실행 시 rabbitmq, eureka, config service 설정을 환경변수로 등록해줬다.
+
+#### Dockerfile
+
+```bash
+FROM openjdk:17-ea-11-jdk-slim
+VOLUME /tmp
+COPY build/libs/apigateway-service-1.0.jar apigateway-service.jar
+ENTRYPOINT ["java", "-jar", "apigateway-service.jar"]
+```
+
+#### docker build
+
+```bash
+docker build -t hjaedeok15/apigateway-service .
+```
+
+#### docker run
+-e 옵션으로 config-service, rabbitmq, eureka 설정을 가변으로 설정해줬다.
+
+```bash
+docker run -d -p 8000:8000 --network ecommerce-network \
+-e "spring.cloud.config.uri=http://config-service:8888" \
+-e "spring.rabbitmq.host=rabbitmq" \
+-e "eureka.client.service-url.defaultZone=http://discovery-service:8761/eureka" \
+--name apigateway-service hjaedeok15/apigateway-service:1.0
 ```
