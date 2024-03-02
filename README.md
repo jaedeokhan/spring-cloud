@@ -87,6 +87,7 @@
    <li><a href="#section15-애플리케이션-배포-Docker-Container">Secion15. 애플리케이션 배포 - Docker Container</a></li>
    <ul>  
       <li><a href="#RabbitMQ">RabbitMQ</a></li>
+      <li><a href="#Config-Service">Config Service</a></li>
    </ul>
    
 </ul>
@@ -2070,4 +2071,71 @@ docker run -d --name rabbitmq --network ecommerce-network \
 -p 15672:15672 -p 5672:5672 -p 15671:15671 -p 5671:5671 -p 4369:4369 \
 -e RABBITMQ_DEFAULT_USER=guest \
 -e RABBITMQ_DEFAULT_PASS=guest rabbitmq:management
+```
+
+### Config Service
+
+#### bootstarp.yml 수정
+encrypt.key-store.location을 local 경로에서 docker container가 접근할 / 경로로 수정
+
+```yml
+encrypt:
+#  key: abcdefghijklmnopqrstuvwxyz012345678
+  key-store:
+#    location: file:///${user.home}/study/spring-boot/spring-msa/keystore/apiEncryptionKey.jks
+    location: file:/apiEncryptionKey.jks
+```
+
+#### application.yml 수정
+spring.cloud.config.server.git.uri 수정 및 default-label 추가
+현재 Spring Boot 2.4.4와 Spring Cloud 2020.0 버전을 사용중이라서 default-label을 main으로 수정
+
+```yml
+spring
+   cloud:
+     config:
+       server:
+         native:
+           search-locations: file:///${user.home}/study/spring-boot/spring-msa/configuration-service/native-file-repo
+         git:
+#            uri: file://C:\Users\jaedeok\study\spring-boot\spring-msa\configuration-service\local-git-repo
+           uri: https://github.com/jaedeokhan/spring-cloud-config
+           default-label: main
+```
+
+#### Dockerfile
+
+```bash
+FROM openjdk:17-ea-11-jdk-slim
+VOLUME /tmp
+COPY apiEncryptionKey.jks apiEncryptionKey.jks
+COPY build/libs/config-service-1.0.jar config-service.jar
+ENTRYPOINT ["java", "-jar", "config-service.jar"]
+```
+
+#### docker build
+docker build를 config-service 프로젝트 경로에서 진행한다.
+
+```bash
+docker build -t hjaedeok15/config-service:1.0 .
+```
+
+#### docker run
+docker run 명령어로 config-service의 컨테이너를 실행하낟.
+* -d : detached 백그라운드 모드
+* -p : 호스트 port:내부 port
+* --network : 네트워크 설정
+* -e : 환경설정 
+
+```bash
+docker run -d -p 8888:8888 --network ecommerce-network \
+-e "spring.rabbitmq.host=rabbitmq" \
+-e "spring.profiles.active=default" \
+--name config-service hjaedeok15/config-service:1.0
+```
+
+#### network 확인
+
+```bash
+docker network inspect ecommerce-network
 ```
