@@ -1,5 +1,4 @@
 # Spring Cloud 
-
 <ul>
    <li><a href="#section-4-users-microservice">Section4. Users Microservice</a></li>
    <ul>
@@ -92,6 +91,7 @@
       <li><a href="#Apigateway-Service">Apigateway Service</a></li>
       <li><a href="#MariaDB">MariaDB</a></li> 
       <li><a href="#Kafka">Kafka</a></li> 
+      <li><a href="#Monitoring">Monitoring</a></li> 
   </ul>
 </ul>
 
@@ -2301,4 +2301,73 @@ networks:
 
 ```bash
 docker-compose -f docker-compose-single-broker.yml up -d
+```
+
+### Monitoring
+Prometheus와 Grafana를 docker run 명령어를 통해서 실행했다.
+
+#### Prometheus promethues.yml 수정
+기존 localhost를 각각의 컨테이너에 맞게 promethues, apigateway-service로 수정했다.
+
+```yml
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['prometheus:9090']
+  - job_name: 'user-service'
+    scrape_interval: 15s
+    metrics_path: '/user-service/actuator/prometheus'
+    static_configs:
+      - targets: ['apigateway-service:8000'] # Api Gateway Port
+  - job_name: 'apigateway-service'
+    scrape_interval: 15s
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['apigateway-service:8000'] # Api Gateway Port
+  - job_name: 'order-service'
+    scrape_interval: 15s
+    metrics_path: '/order-service/actuator/prometheus'
+    static_configs:
+      - targets: ['apigateway-service:8000'] # Api Gateway Port
+```
+
+#### Promethues docker run
+-v 볼륨 공유는 위에서 설정한 prometheus.yml을 컨테이너 내부에 공유할 수 있게 설정했다.
+
+```bash
+docker run -d -p 9090:9090 --network ecommerce-network \
+--name prometheus \
+-v /c/Users/jaedeok/study/spring-boot/spring-msa/docker-files/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml \
+prom/prometheus
+```
+
+#### Grafana docker run
+
+```bash
+docker run -d -p 3000:3000 --network ecommerce-network --name grafana grafana/grafana
 ```
