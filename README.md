@@ -90,9 +90,8 @@
       <li><a href="#Config-Service">Config Service</a></li>
       <li><a href="#Discovery-Service">Discovery Service</a></li>
       <li><a href="#Apigateway-Service">Apigateway Service</a></li>
-   </ul>
-   
-</ul>
+      <li><a href="#MariaDB">MariaDB</a></li> 
+  </ul>
 </ul>
 
 ## Section. 4 Users Microservice
@@ -104,15 +103,13 @@
 
 #### build.gralde
 
-```js
-plugins {  
+```js plugins {  
     id 'org.springframework.boot' version '2.4.4'  
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'  
     id 'java'  
 }  
   
-group = 'user-service'  
-version = '0.0.1-SNAPSHOT'  
+group = 'user-service'  version = '0.0.1-SNAPSHOT'  
 sourceCompatibility = '11'  
   
 configurations {  
@@ -2215,4 +2212,38 @@ docker run -d -p 8000:8000 --network ecommerce-network \
 -e "spring.rabbitmq.host=rabbitmq" \
 -e "eureka.client.service-url.defaultZone=http://discovery-service:8761/eureka" \
 --name apigateway-service hjaedeok15/apigateway-service:1.0
+```
+
+### MariaDB
+MariaDB는 Local에서 현재 사용하고 있는 버전과 맞추기 위해서 10.5.23 버전을 사용했다.
+기존에 mydb 데이터베이스 스키마들과 데이터를 그대로 사용하기 위해서
+mysqldump를 통해서 sql 파일을 만들고 이미지 파일에 COPY를 복사하고 sql을 실행하게 해줬다.
+
+#### mysqldump
+
+```bash
+mysqldump -u root -p mydb > mydb.sql
+```
+
+#### Dockerfile
+
+```dockerfile
+FROM mariadb:10.5.23
+ENV MYSQL_ROOT_PASSWORD test1357
+ENV MYSQL_DATABASE mydb
+COPY ./mydb.sql /docker-entrypoint-initdb.d/
+EXPOSE 3306
+```
+
+#### docker build
+
+```bash
+docker build -t . hjaedeok15/mariadb:1.0 .
+```
+
+#### docker run
+Host port는 현재 3306을 사용하는것이 있어서 33006 port로 사용했다.
+
+```bash
+docker run -d -p 33006:3306 --network ecommerce-network --name mariadb-10.5.23 hjaedeok15/mariadb:10.5.23
 ```
