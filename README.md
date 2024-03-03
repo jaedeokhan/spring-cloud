@@ -92,6 +92,8 @@
       <li><a href="#MariaDB">MariaDB</a></li> 
       <li><a href="#Kafka">Kafka</a></li> 
       <li><a href="#Monitoring">Monitoring</a></li> 
+      <li><a href="#User Service">User Service</a></li> 
+      <li><a href="#Order Service">Order Service</a></li> 
   </ul>
 </ul>
 
@@ -2371,3 +2373,192 @@ prom/prometheus
 ```bash
 docker run -d -p 3000:3000 --network ecommerce-network --name grafana grafana/grafana
 ```
+
+### User Service
+User Service를 dokcer run으로 기동하기 위해서는 config.uri, rabbitmq, zipking, eureka 설정을 처리해야 한다.
+
+#### spring-cloud-config user-service.yml의 gateway.ip 수정
+기존 192.168.0.2를 컨테이너의 apigateway ip로 수정했다.
+
+```yml
+"gateway.ip": "172.18.0.5"
+```
+
+#### Dockerfile
+
+```dockerfile
+FROM openjdk:17-ea-slim
+VOLUME /tmp
+COPY build/libs/user-service-1.0.jar user-service.jar
+ENTRYPOINT ["java", "-jar", "user-service.jar"]
+```
+
+#### docker build
+
+```bash
+docker build -t hjaedeok15/user-service:1.0 .
+```
+
+#### docker run
+
+```bash
+docker run -d --network ecommerce-network \ 
+--name user-service \
+-e "spring.cloud.config.uri=http://config-service:8888" \
+-e "spring.rabbitmq.host=rabbitmq" \
+-e "spring.zipkin.base-url=http://zipkin:9411" \
+-e "eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka" \
+-e "logging.file=/api-logs/users-ws.log" \
+hjaedeok15/user-service:1.0
+```
+
+### Order Service
+Order Service를 docker container로 기동하기 위해서 하단 작업을 해야한다.
+1. KafkaProducerConfig.java에서 ip를 127.0.0.1에서 컨테이너의 kafka ip인 172.18.0.101로 수정
+2. OrderController에서 kafka send 주석 해제 & Reslience4j 예외 처리를 위한 exception 제거
+3. docker run 시 order service가 접근하는 mariadb port는 host port가 아니라 내부 port 사용
+
+#### KafkaProducerConfig.java에서 ip를 127.0.0.1에서 컨테이너의 kafka ip인 172.18.0.101로 수정
+
+```java
+package org.example.orderservice.messagequeue;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@EnableKafka
+@Configuration(proxyBeanMethods = false)
+public class KafkaProducerConfig {
+    @Bean
+    public ProducerFactory<String, String> producerFactory() {
+        Map<String, Object> properties = new HashMap<>();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "172.18.0.101:9092");
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        return new DefaultKafkaProducerFactory<>(properties);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+}
+
+```
+
+#### OrderController에서 kafka send 주석 해제 & Reslience4j 예외 처리를 위한 exception 제거
+
+```java
+package org.example.orderservice.controller;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.example.orderservice.dto.OrderDto;
+import org.example.orderservice.jpa.OrderEntity;
+import org.example.orderservice.messagequeue.KafkaProducer;
+import org.example.orderservice.messagequeue.OrderProducer;
+import org.example.orderservice.service.OrderService;
+import org.example.orderservice.vo.RequestOrder;
+import org.example.orderservice.vo.ResponseOrder;
+import org.modelmapper.ModelMapper;
+import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/")
+@RequiredArgsConstructor
+@Slf4j
+public class OrderController {
+
+    private final Environment env;
+    private final OrderService orderService;
+    private final ModelMapper mapper;
+    private final KafkaProducer kafkaProducer;
+    private final OrderProducer orderProducer;
+
+    @GetMapping("/health_check")
+    public String healthCheck() {
+        return String.format("It's Working in Order Service on PORT %s",
+                env.getProperty("local.server.port"));
+    }
+
+    // http://127.0.0.1:0/order-service/{user_id}/orders
+    @PostMapping("/{userId}/orders")
+    public ResponseEntity<ResponseOrder> createOrder(@PathVariable String userId,
+                                                     @RequestBody RequestOrder requestOrder) {
+        log.info("BEFORE add orders data");
+        OrderDto orderDto = mapper.map(requestOrder, OrderDto.class);
+        orderDto.setUserId(userId);
+        /* Process JPA */
+        OrderDto createOrder = orderService.createOrder(orderDto);
+        ResponseOrder responseOrder = mapper.map(createOrder, ResponseOrder.class);
+
+        /* kafka */
+//        orderDto.setOrderId(UUID.randomUUID().toString());
+//        orderDto.setTotalPrice(requestOrder.getQty() * requestOrder.getUnitPrice());
+//
+//        /* Send this order to the Kafka */
+        kafkaProducer.send("example-catalog-topic", orderDto);
+//        orderProducer.send("orders", orderDto);
+
+//        ResponseOrder responseOrder = mapper.map(orderDto, ResponseOrder.class);
+        log.info("AFTER add orders data");
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseOrder);
+    }
+
+    @GetMapping("/{userId}/orders")
+    public ResponseEntity<List<ResponseOrder>> getOrder(@PathVariable String userId) throws Exception {
+        log.info("BEFORE retrieve orders data");
+        Iterable<OrderEntity> orders = orderService.getOrdersByUserId(userId);
+
+        List<ResponseOrder> result = new ArrayList<>();
+        orders.forEach(v -> {
+            result.add(mapper.map(v, ResponseOrder.class));
+        });
+
+        // 예외처리 테스트 시 사용
+//        try {
+//            Thread.sleep(1000);
+//            throw new Exception("장애 발생");
+//        } catch (InterruptedException e) {
+//            log.warn(e.getMessage());
+//        }
+
+        log.info("AFTER retrieve orders data");
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+
+}
+```
+
+#### docker run 시 order service가 접근하는 mariadb port는 host port가 아니라 내부 port 사용
+
+```bash
+docker run -d --name order-service \
+--network ecommerce-network \
+-e "spring.zipkin.base-url=http://zipkin:9411" \
+-e "spring.rabbitmq.host=rabbitmq" \
+-e "eureka.client.serviceUrl.defaultZone=http://discovery-service:8761/eureka" \
+-e "spring.datasource.url=jdbc:mariadb://mariadb:3306/mydb" \
+-e "logging.file=/api-logs/orders-ws.log" \
+hjaedeok15/order-service:1.0
+```
+

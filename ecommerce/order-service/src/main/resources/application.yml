@@ -27,7 +27,7 @@ spring:
     url: jdbc:mariadb://localhost:3307/mydb
     driver-class-name: org.mariadb.jdbc.Driver
     username: root
-    password: woejr!15
+    password: test1357
 
 eureka:
   instance:
@@ -50,3 +50,4 @@ management:
     web:
       exposure:
         include: health, httptrace, info, metrics, prometheus
+
