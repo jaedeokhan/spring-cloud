@@ -91,6 +91,7 @@
       <li><a href="#Discovery-Service">Discovery Service</a></li>
       <li><a href="#Apigateway-Service">Apigateway Service</a></li>
       <li><a href="#MariaDB">MariaDB</a></li> 
+      <li><a href="#Kafka">Kafka</a></li> 
   </ul>
 </ul>
 
@@ -2246,4 +2247,58 @@ Host port는 현재 3306을 사용하는것이 있어서 33006 port로 사용했
 
 ```bash
 docker run -d -p 33006:3306 --network ecommerce-network --name mariadb-10.5.23 hjaedeok15/mariadb:10.5.23
+```
+
+### Kafka 
+kafka는 https://github.com/wurstmeister/kafka-docker 해당 사이트에서 clone을 먼저 받고,
+kafka-docker 폴더에서 docker-compose-single-broker.yml을 수정해서 사용했다.
+
+#### docker-compose-single-broker.yml
+
+service.zookeeper는 zookeeper에 대한 설정을 나열했고, port는 2181, ip는 172.18.0.100을 할당하고,
+network는 ecommerce-network를 사용하게 설정했다.
+
+service.kafka는 kafka에 대한 설정을 나열했고, port는 9092, ip는 172.18.0.101을 할당했고,
+network는 동일하게 ecommerce-network를 사용하게 설정했다.
+
+services.kafka.build는 사용하지 않고, service kafka.image를 사용
+
+networks에는 ecommerce-network를 my-network로 사용하겠다고 설정했다.
+
+```yml
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      my-network:
+        ipv4_address: 172.18.0.100
+  kafka:
+    #build: .
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 172.18.0.101
+      KAFKA_CREATE_TOPICS: "test:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
+    networks:
+      my-network:
+        ipv4_address: 172.18.0.101
+
+networks:
+  my-network:
+    name: ecommerce-network # 172.18.0.1 ~
+```
+
+#### Up docker-compose
+
+```bash
+docker-compose -f docker-compose-single-broker.yml up -d
 ```
