@@ -2,6 +2,7 @@ package org.example.config.security;
 
 import lombok.RequiredArgsConstructor;
 import org.example.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -19,13 +20,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final Environment env;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    @Value("${gateway.ip}")
+    private String gatewayIp;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable();
         http.authorizeRequests().antMatchers("/actuator/**").permitAll();
         http.authorizeRequests().antMatchers("/**")
-                .hasIpAddress("192.168.0.2")
+                .hasIpAddress(gatewayIp)
+//                .hasIpAddress("192.168.56.1")
                 .and()
                 .addFilter(getAuthenticationFilter());
 
@@ -37,7 +41,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         authenticationFilter.setAuthenticationManager(authenticationManager());
 
         return authenticationFilter;
-    }
+}
 
     // select pwd from users where email=?
     // db_pwd == input_enc
